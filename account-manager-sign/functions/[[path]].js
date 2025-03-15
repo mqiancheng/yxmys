@@ -1,6 +1,5 @@
 export async function onRequest(context) {
   console.log('onRequest triggered for:', context.request.url); // 调试：确认函数执行
-  console.log('Environment variables:', JSON.stringify(context.env)); // 调试：输出环境变量
   const url = new URL(context.request.url);
   if (url.pathname === '/') {
     const html = `
@@ -13,16 +12,7 @@ export async function onRequest(context) {
         <link rel="stylesheet" href="/styles.css">
       </head>
       <body>
-        <div id="login-container" style="display: block;">
-          <h2>登录</h2>
-          <form id="login-form">
-            <label>密码:</label>
-            <input type="password" id="login-password" required>
-            <button type="submit">登录</button>
-          </form>
-          <p>提示：密码为 <code>mnqswahi</code>（区分大小写）</p>
-        </div>
-        <div id="content-container" style="display: none;">
+        <div id="content-container" style="display: block;">
           <div class="container">
             <h1>账号管理</h1>
             <div class="section">
@@ -57,15 +47,10 @@ export async function onRequest(context) {
           </div>
         </div>
         <script>
-          try {
-            window.env = window.env || {};
-            window.env.API_URL = '${context.env.API_URL || 'https://yxmys-kv-manager-sign.qldyf.workers.dev'}';
-            window.env.SECRET = '${context.env.SECRET || '666'}';
-            window.env.LOGIN_PASSWORD = '${context.env.LOGIN_PASSWORD || 'mnqswahi'}';
-            console.log('Injected window.env from server:', JSON.stringify(window.env)); // 调试：输出注入的环境变量
-          } catch (error) {
-            console.error('Error injecting window.env:', error);
-          }
+          window.env = window.env || {};
+          window.env.API_URL = '${context.env.API_URL || 'https://yxmys-kv-manager-sign.qldyf.workers.dev'}';
+          window.env.SECRET = '${context.env.SECRET || '666'}';
+          console.log('Injected window.env from server:', JSON.stringify(window.env)); // 调试：输出注入的环境变量
         </script>
         <script src="/script.js" defer></script>
       </body>
