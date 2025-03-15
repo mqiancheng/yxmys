@@ -1,4 +1,5 @@
 export async function onRequest(context) {
+  console.log('onRequest triggered for:', context.request.url); // 调试：确认函数执行
   const url = new URL(context.request.url);
   if (url.pathname === '/') {
     const html = `
