@@ -1,21 +1,35 @@
 // 登录密码（从环境变量获取）
-const LOGIN_PASSWORD = window.env.LOGIN_PASSWORD || 'mnqswhai'; // 默认值与环境变量保持一致
-
-// 登录逻辑
-document.getElementById('login-form').addEventListener('submit', function(e) {
-  e.preventDefault();
-  const password = document.getElementById('login-password').value;
-  if (password === LOGIN_PASSWORD) {
-    document.getElementById('login-container').style.display = 'none';
-    document.getElementById('content-container').style.display = 'block';
-    loadAccounts();
-  } else {
-    alert('密码错误！');
-  }
-});
+const LOGIN_PASSWORD = window.env.LOGIN_PASSWORD || 'mnqswahi'; // 默认值仅用于调试
+console.log('LOGIN_PASSWORD:', LOGIN_PASSWORD); // 调试：输出实际密码值
 
 // 环境变量注入（由 [[path]].js 处理）
 window.env = window.env || {};
+console.log('window.env:', window.env); // 调试：输出环境变量
+
+// 登录逻辑
+document.addEventListener('DOMContentLoaded', () => {
+  const loginForm = document.getElementById('login-form');
+  if (!loginForm) {
+    console.error('Login form not found!');
+    return;
+  }
+
+  loginForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    console.log('Login form submitted'); // 调试：确认事件触发
+    const password = document.getElementById('login-password').value;
+    console.log('Entered password:', password); // 调试：输出用户输入的密码
+    if (password === LOGIN_PASSWORD) {
+      console.log('Password correct, logging in...');
+      document.getElementById('login-container').style.display = 'none';
+      document.getElementById('content-container').style.display = 'block';
+      loadAccounts();
+    } else {
+      console.log('Password incorrect');
+      alert('密码错误！');
+    }
+  });
+});
 
 // 加载账号列表
 async function loadAccounts() {
@@ -138,8 +152,3 @@ async function editAccount(appPst) {
     alert('修改账号失败：' + error.message);
   }
 }
-
-// 页面加载时显示登录框
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('login-container').style.display = 'block';
-});
