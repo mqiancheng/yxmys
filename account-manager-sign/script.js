@@ -1,9 +1,25 @@
-const API_URL = window.env.API_URL;
-const SECRET = window.env.SECRET;
+// 登录密码（建议通过环境变量注入，暂硬编码为示例）
+const LOGIN_PASSWORD = 'your-login-password'; // 替换为你的登录密码，或通过 context.env 注入
+
+// 登录逻辑
+document.getElementById('login-form').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const password = document.getElementById('login-password').value;
+  if (password === LOGIN_PASSWORD) {
+    document.getElementById('login-container').style.display = 'none';
+    document.getElementById('content-container').style.display = 'block';
+    loadAccounts();
+  } else {
+    alert('密码错误！');
+  }
+});
+
+// 环境变量注入（由 [[path]].js 处理）
+window.env = window.env || {};
 
 // 加载账号列表
 async function loadAccounts() {
-  const response = await fetch(`${API_URL}/accounts?secret=${SECRET}`);
+  const response = await fetch(`${window.env.API_URL}/accounts?secret=${window.env.SECRET}`);
   const accounts = await response.json();
   const accountList = document.getElementById('account-list');
   accountList.innerHTML = '';
@@ -35,33 +51,41 @@ document.getElementById('add-form').addEventListener('submit', async (e) => {
     signDays: parseInt(formData.get('signDays'))
   };
 
-  await fetch(`${API_URL}/accounts?secret=${SECRET}`, {
+  const response = await fetch(`${window.env.API_URL}/accounts?secret=${window.env.SECRET}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(newAccount)
   });
 
-  alert('账号添加成功！');
-  e.target.reset();
-  loadAccounts();
+  if (response.ok) {
+    alert('账号添加成功！');
+    e.target.reset();
+    loadAccounts();
+  } else {
+    alert('添加失败: ' + await response.text());
+  }
 });
 
 // 删除账号
 async function deleteAccount(appPst) {
   if (confirm('确定删除此账号？')) {
-    await fetch(`${API_URL}/accounts/delete?secret=${SECRET}`, {
+    const response = await fetch(`${window.env.API_URL}/accounts/delete?secret=${window.env.SECRET}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ appPst })
     });
-    alert('账号删除成功！');
-    loadAccounts();
+    if (response.ok) {
+      alert('账号删除成功！');
+      loadAccounts();
+    } else {
+      alert('删除失败: ' + await response.text());
+    }
   }
 }
 
 // 编辑账号
 async function editAccount(appPst) {
-  const response = await fetch(`${API_URL}/accounts?secret=${SECRET}`);
+  const response = await fetch(`${window.env.API_URL}/accounts?secret=${window.env.SECRET}`);
   const accounts = await response.json();
   const account = accounts.find(acc => acc.appPst === appPst);
 
@@ -76,15 +100,20 @@ async function editAccount(appPst) {
     signDays: parseInt(newSignDays) || account.signDays
   };
 
-  await fetch(`${API_URL}/accounts/update?secret=${SECRET}`, {
+  const editResponse = await fetch(`${window.env.API_URL}/accounts/update?secret=${window.env.SECRET}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(updatedAccount)
   });
-
-  alert('账号修改成功！');
-  loadAccounts();
+  if (editResponse.ok) {
+    alert('账号修改成功！');
+    loadAccounts();
+  } else {
+    alert('修改失败: ' + await editResponse.text());
+  }
 }
 
-// 初始化加载
-loadAccounts();
+// 页面加载时显示登录框
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('login-container').style.display = 'block';
+});
