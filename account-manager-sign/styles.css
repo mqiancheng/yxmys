@@ -1,3 +1,4 @@
+/* account-manager-sign/styles.css */
 body {
   font-family: Arial, sans-serif;
   background-color: #f0f2f5;
@@ -65,4 +66,21 @@ th, td {
 
 th {
   background-color: #f5f5f5;
+}
+
+.edit {
+  background-color: #28a745;
+  margin-right: 5px;
+}
+
+.edit:hover {
+  background-color: #218838;
+}
+
+.delete {
+  background-color: #dc3545;
+}
+
+.delete:hover {
+  background-color: #c82333;
 }
