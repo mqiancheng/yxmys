@@ -1,10 +1,10 @@
+// 确保 window.env 存在
+window.env = window.env || {};
+console.log('Initial window.env:', window.env); // 调试：输出初始 window.env
+
 // 登录密码（从环境变量获取）
 const LOGIN_PASSWORD = window.env.LOGIN_PASSWORD || 'mnqswahi'; // 默认值与环境变量保持一致
 console.log('LOGIN_PASSWORD:', LOGIN_PASSWORD); // 调试：输出实际密码值
-
-// 环境变量注入（由 [[path]].js 处理）
-window.env = window.env || {};
-console.log('window.env:', window.env); // 调试：输出环境变量
 
 // 确保 DOM 加载后绑定事件
 document.addEventListener('DOMContentLoaded', () => {
@@ -34,7 +34,9 @@ document.addEventListener('DOMContentLoaded', () => {
 // 加载账号列表
 async function loadAccounts() {
   try {
-    const response = await fetch(`${window.env.API_URL}/accounts?secret=${window.env.SECRET}`);
+    const apiUrl = window.env.API_URL || 'https://yxmys-kv-manager-sign.qldyf.workers.dev';
+    const secret = window.env.SECRET || '666';
+    const response = await fetch(`${apiUrl}/accounts?secret=${secret}`);
     if (!response.ok) {
       throw new Error(`Failed to fetch accounts: ${response.status} ${response.statusText}`);
     }
@@ -78,7 +80,9 @@ document.getElementById('add-form').addEventListener('submit', async (e) => {
   };
 
   try {
-    const response = await fetch(`${window.env.API_URL}/accounts?secret=${window.env.SECRET}`, {
+    const apiUrl = window.env.API_URL || 'https://yxmys-kv-manager-sign.qldyf.workers.dev';
+    const secret = window.env.SECRET || '666';
+    const response = await fetch(`${apiUrl}/accounts?secret=${secret}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newAccount)
@@ -99,7 +103,9 @@ document.getElementById('add-form').addEventListener('submit', async (e) => {
 async function deleteAccount(appPst) {
   if (confirm('确定删除此账号？')) {
     try {
-      const response = await fetch(`${window.env.API_URL}/accounts/delete?secret=${window.env.SECRET}`, {
+      const apiUrl = window.env.API_URL || 'https://yxmys-kv-manager-sign.qldyf.workers.dev';
+      const secret = window.env.SECRET || '666';
+      const response = await fetch(`${apiUrl}/accounts/delete?secret=${secret}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ appPst })
@@ -119,7 +125,9 @@ async function deleteAccount(appPst) {
 // 编辑账号
 async function editAccount(appPst) {
   try {
-    const response = await fetch(`${window.env.API_URL}/accounts?secret=${window.env.SECRET}`);
+    const apiUrl = window.env.API_URL || 'https://yxmys-kv-manager-sign.qldyf.workers.dev';
+    const secret = window.env.SECRET || '666';
+    const response = await fetch(`${apiUrl}/accounts?secret=${secret}`);
     if (!response.ok) {
       throw new Error(`Failed to fetch accounts: ${response.status} ${response.statusText}`);
     }
@@ -137,7 +145,7 @@ async function editAccount(appPst) {
       signDays: parseInt(newSignDays) || account.signDays
     };
 
-    const editResponse = await fetch(`${window.env.API_URL}/accounts/update?secret=${window.env.SECRET}`, {
+    const editResponse = await fetch(`${apiUrl}/accounts/update?secret=${secret}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updatedAccount)
