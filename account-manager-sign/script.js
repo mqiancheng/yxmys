@@ -1,5 +1,5 @@
-// 登录密码（建议通过环境变量注入，暂硬编码为示例）
-const LOGIN_PASSWORD = 'your-login-password'; // 替换为你的登录密码，或通过 context.env 注入
+// 登录密码（从环境变量获取）
+const LOGIN_PASSWORD = window.env.LOGIN_PASSWORD || 'your-login-password'; // 默认值仅用于调试
 
 // 登录逻辑
 document.getElementById('login-form').addEventListener('submit', function(e) {
