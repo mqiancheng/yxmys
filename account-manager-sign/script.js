@@ -1,73 +1,154 @@
-export async function onRequest(context) {
-  const url = new URL(context.request.url);
-  if (url.pathname === '/') {
-    const html = `
-      <!DOCTYPE html>
-      <html lang="zh-CN">
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>账号管理</title>
-        <link rel="stylesheet" href="/styles.css">
-      </head>
-      <body>
-        <div id="login-container" style="display: block;">
-          <h2>登录</h2>
-          <form id="login-form">
-            <label>密码:</label>
-            <input type="password" id="login-password" required>
-            <button type="submit">登录</button>
-          </form>
-        </div>
-        <div id="content-container" style="display: none;">
-          <div class="container">
-            <h1>账号管理</h1>
-            <div class="section">
-              <h2>添加新账号</h2>
-              <form id="add-form">
-                <label>appPst:</label>
-                <input type="text" name="appPst" required>
-                <label>sctKey（可选）:</label>
-                <input type="text" name="sctKey">
-                <label>开始日期 (YYYY-MM-DD):</label>
-                <input type="text" name="startDate" placeholder="2025-01-01" required>
-                <label>签到天数:</label>
-                <input type="number" name="signDays" required>
-                <button type="submit">添加账号</button>
-              </form>
-            </div>
-            <div class="section">
-              <h2>账号列表</h2>
-              <table id="account-table">
-                <thead>
-                  <tr>
-                    <th>appPst</th>
-                    <th>sctKey</th>
-                    <th>开始日期</th>
-                    <th>签到天数</th>
-                    <th>操作</th>
-                  </tr>
-                </thead>
-                <tbody id="account-list"></tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-        <script>
-          window.env = {
-            API_URL: '${context.env.API_URL || 'https://yxmys-kv-manager-sign.qldyf.workers.dev'}',
-            SECRET: '${context.env.SECRET || '666'}',
-            LOGIN_PASSWORD: '${context.env.LOGIN_PASSWORD || 'mnqswahi'}'
-          };
-          console.log('Injected window.env:', window.env); // 调试：输出注入的环境变量
-        </script>
-        <script src="/script.js"></script>
-      </body>
-      </html>
-    `;
-    return new Response(html, {
-      headers: { 'Content-Type': 'text/html' }
-    });
+// 登录密码（从环境变量获取）
+const LOGIN_PASSWORD = window.env.LOGIN_PASSWORD || 'mnqswahi'; // 默认值与环境变量保持一致
+console.log('LOGIN_PASSWORD:', LOGIN_PASSWORD); // 调试：输出实际密码值
+
+// 环境变量注入（由 [[path]].js 处理）
+window.env = window.env || {};
+console.log('window.env:', window.env); // 调试：输出环境变量
+
+// 确保 DOM 加载后绑定事件
+document.addEventListener('DOMContentLoaded', () => {
+  const loginForm = document.getElementById('login-form');
+  if (!loginForm) {
+    console.error('Login form not found!');
+    return;
   }
-  return await context.next();
+
+  loginForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    console.log('Login form submitted'); // 调试：确认事件触发
+    const password = document.getElementById('login-password').value;
+    console.log('Entered password:', password); // 调试：输出用户输入的密码
+    if (password === LOGIN_PASSWORD) {
+      console.log('Password correct, logging in...');
+      document.getElementById('login-container').style.display = 'none';
+      document.getElementById('content-container').style.display = 'block';
+      loadAccounts();
+    } else {
+      console.log('Password incorrect');
+      alert('密码错误！');
+    }
+  });
+});
+
+// 加载账号列表
+async function loadAccounts() {
+  try {
+    const response = await fetch(`${window.env.API_URL}/accounts?secret=${window.env.SECRET}`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch accounts: ${response.status} ${response.statusText}`);
+    }
+    const accounts = await response.json();
+    const accountList = document.getElementById('account-list');
+    accountList.innerHTML = '';
+
+    if (Array.isArray(accounts)) {
+      accounts.forEach(account => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${account.appPst.slice(0, 20)}...</td>
+          <td>${account.sctKey || '无'}</td>
+          <td>${account.startDate}</td>
+          <td>${account.signDays}</td>
+          <td>
+            <button class="edit" onclick="editAccount('${account.appPst}')">编辑</button>
+            <button class="delete" onclick="deleteAccount('${account.appPst}')">删除</button>
+          </td>
+        `;
+        accountList.appendChild(row);
+      });
+    } else {
+      throw new Error('Invalid account data format');
+    }
+  } catch (error) {
+    console.error('Error loading accounts:', error);
+    alert('无法加载账号列表，请检查网络或 API 配置。错误详情：' + error.message);
+  }
+}
+
+// 添加账号
+document.getElementById('add-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const formData = new FormData(e.target);
+  const newAccount = {
+    appPst: formData.get('appPst'),
+    sctKey: formData.get('sctKey') || undefined,
+    startDate: formData.get('startDate'),
+    signDays: parseInt(formData.get('signDays'))
+  };
+
+  try {
+    const response = await fetch(`${window.env.API_URL}/accounts?secret=${window.env.SECRET}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newAccount)
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to add account: ${response.status} ${response.statusText}`);
+    }
+    alert('账号添加成功！');
+    e.target.reset();
+    loadAccounts();
+  } catch (error) {
+    console.error('Error adding account:', error);
+    alert('添加账号失败：' + error.message);
+  }
+});
+
+// 删除账号
+async function deleteAccount(appPst) {
+  if (confirm('确定删除此账号？')) {
+    try {
+      const response = await fetch(`${window.env.API_URL}/accounts/delete?secret=${window.env.SECRET}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ appPst })
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to delete account: ${response.status} ${response.statusText}`);
+      }
+      alert('账号删除成功！');
+      loadAccounts();
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      alert('删除账号失败：' + error.message);
+    }
+  }
+}
+
+// 编辑账号
+async function editAccount(appPst) {
+  try {
+    const response = await fetch(`${window.env.API_URL}/accounts?secret=${window.env.SECRET}`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch accounts: ${response.status} ${response.statusText}`);
+    }
+    const accounts = await response.json();
+    const account = accounts.find(acc => acc.appPst === appPst);
+
+    const newSctKey = prompt('请输入新的 sctKey（留空表示不修改）：', account.sctKey || '');
+    const newStartDate = prompt('请输入新的开始日期 (YYYY-MM-DD)：', account.startDate);
+    const newSignDays = prompt('请输入新的签到天数：', account.signDays);
+
+    const updatedAccount = {
+      appPst: account.appPst,
+      sctKey: newSctKey || account.sctKey,
+      startDate: newStartDate || account.startDate,
+      signDays: parseInt(newSignDays) || account.signDays
+    };
+
+    const editResponse = await fetch(`${window.env.API_URL}/accounts/update?secret=${window.env.SECRET}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatedAccount)
+    });
+    if (!editResponse.ok) {
+      throw new Error(`Failed to update account: ${editResponse.status} ${editResponse.statusText}`);
+    }
+    alert('账号修改成功！');
+    loadAccounts();
+  } catch (error) {
+    console.error('Error editing account:', error);
+    alert('修改账号失败：' + error.message);
+  }
 }
