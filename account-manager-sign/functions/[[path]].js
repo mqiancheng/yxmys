@@ -59,6 +59,7 @@ export async function onRequest(context) {
             SECRET: '${context.env.SECRET}',
             LOGIN_PASSWORD: '${context.env.LOGIN_PASSWORD}'
           };
+          console.log('Injected window.env:', window.env); // 调试：输出注入的环境变量
         </script>
         <script src="/script.js"></script>
       </body>
