@@ -54,12 +54,11 @@ export async function onRequest(context) {
           </div>
         </div>
         <script>
-          window.env = {
-            API_URL: '${context.env.API_URL || 'https://yxmys-kv-manager-sign.qldyf.workers.dev'}',
-            SECRET: '${context.env.SECRET || '666'}',
-            LOGIN_PASSWORD: '${context.env.LOGIN_PASSWORD || 'mnqswahi'}'
-          };
-          console.log('Injected window.env:', window.env); // 调试：输出注入的环境变量
+          window.env = window.env || {};
+          window.env.API_URL = '${context.env.API_URL || 'https://yxmys-kv-manager-sign.qldyf.workers.dev'}';
+          window.env.SECRET = '${context.env.SECRET || '666'}';
+          window.env.LOGIN_PASSWORD = '${context.env.LOGIN_PASSWORD || 'mnqswahi'}';
+          console.log('Injected window.env:', JSON.stringify(window.env)); // 确保输出 JSON 格式
         </script>
         <script src="/script.js"></script>
       </body>
