@@ -1,5 +1,5 @@
 // 登录密码（从环境变量获取）
-const LOGIN_PASSWORD = window.env.LOGIN_PASSWORD || '111111'; // 默认值与环境变量保持一致
+const LOGIN_PASSWORD = window.env.LOGIN_PASSWORD || 'mnqswhai'; // 默认值与环境变量保持一致
 
 // 登录逻辑
 document.getElementById('login-form').addEventListener('submit', function(e) {
