@@ -1,3 +1,4 @@
+// account-manager-sign/script.js
 // 确保 window.env 存在
 window.env = window.env || {};
 console.log('Initial window.env:', JSON.stringify(window.env)); // 调试：输出初始 window.env
