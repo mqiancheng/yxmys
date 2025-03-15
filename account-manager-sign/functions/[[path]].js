@@ -10,6 +10,7 @@ export async function onRequest(context) {
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>账号管理</title>
         <link rel="stylesheet" href="/styles.css">
+        <link rel="icon" href="/favicon.ico">
       </head>
       <body>
         <div id="content-container" style="display: block;">
