@@ -1,5 +1,5 @@
-const API_URL = 'https://kv-manager.workers.dev'; // 替换为你的 kv-manager Worker URL
-const SECRET = 'your-secret-key'; // 与 kv-manager 中的密钥一致
+const API_URL = window.env.API_URL;
+const SECRET = window.env.SECRET;
 
 // 加载账号列表
 async function loadAccounts() {
