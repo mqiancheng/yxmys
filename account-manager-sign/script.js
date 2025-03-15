@@ -49,9 +49,9 @@ document.getElementById('add-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const formData = new FormData(e.target);
   const newAccount = {
-    appPst: formData.get('appPst'),
-    sctKey: formData.get('sctKey') || undefined,
-    startDate: formData.get('startDate'),
+    appPst: formData.get('appPst').trim(),
+    sctKey: formData.get('sctKey') ? formData.get('sctKey').trim() : undefined,
+    startDate: formData.get('startDate').trim(),
     signDays: parseInt(formData.get('signDays'))
   };
 
@@ -63,8 +63,9 @@ document.getElementById('add-form').addEventListener('submit', async (e) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newAccount)
     });
-    if (!response.ok) {
-      throw new Error(`Failed to add account: ${response.status} ${response.statusText}`);
+    const result = await response.json();
+    if (!response.ok || result.error) {
+      throw new Error(result.error || `Failed to add account: ${response.status} ${response.statusText}`);
     }
     alert('账号添加成功！');
     e.target.reset();
@@ -84,8 +85,9 @@ async function deleteAccount(appPst) {
       const response = await fetch(`${apiUrl}/accounts/${appPst}?secret=${secret}`, {
         method: 'DELETE'
       });
-      if (!response.ok) {
-        throw new Error(`Failed to delete account: ${response.status} ${response.statusText}`);
+      const result = await response.json();
+      if (!response.ok || result.error) {
+        throw new Error(result.error || `Failed to delete account: ${response.status} ${response.statusText}`);
       }
       alert('账号删除成功！');
       loadAccounts();
@@ -96,7 +98,7 @@ async function deleteAccount(appPst) {
   }
 }
 
-// 编辑账号（简单示例，需根据需求完善）
+// 编辑账号
 async function editAccount(appPst) {
   const newAppPst = prompt('输入新的 appPst:', appPst);
   const newSctKey = prompt('输入新的 sctKey (可选):');
@@ -105,9 +107,9 @@ async function editAccount(appPst) {
 
   if (newAppPst && newStartDate && newSignDays) {
     const updatedAccount = {
-      appPst: newAppPst,
-      sctKey: newSctKey || undefined,
-      startDate: newStartDate,
+      appPst: newAppPst.trim(),
+      sctKey: newSctKey ? newSctKey.trim() : undefined,
+      startDate: newStartDate.trim(),
       signDays: parseInt(newSignDays)
     };
     try {
@@ -118,8 +120,9 @@ async function editAccount(appPst) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedAccount)
       });
-      if (!response.ok) {
-        throw new Error(`Failed to update account: ${response.status} ${response.statusText}`);
+      const result = await response.json();
+      if (!response.ok || result.error) {
+        throw new Error(result.error || `Failed to update account: ${response.status} ${response.statusText}`);
       }
       alert('账号更新成功！');
       loadAccounts();
@@ -127,5 +130,7 @@ async function editAccount(appPst) {
       console.error('Error updating account:', error);
       alert('更新账号失败：' + error.message);
     }
+  } else {
+    alert('所有必填字段必须填写！');
   }
 }
