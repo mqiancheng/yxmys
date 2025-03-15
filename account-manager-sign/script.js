@@ -1,5 +1,5 @@
-const API_URL = 'https://kv-manager.workers.dev'; // 替换为你的 kv-manager Worker URL
-const SECRET = 'your-secret-key'; // 与 kv-manager 中的密钥一致
+const API_URL = 'https://yxmys-kv-manager-sign.qldyf.workers.dev'; // 替换为你的 kv-manager Worker URL
+const SECRET = '666'; // 与 kv-manager 中的密钥一致
 
 // 加载账号列表
 async function loadAccounts() {
