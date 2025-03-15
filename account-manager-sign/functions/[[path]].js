@@ -18,6 +18,7 @@ export async function onRequest(context) {
             <input type="password" id="login-password" required>
             <button type="submit">登录</button>
           </form>
+          <p>提示：密码为 <code>mnqswahi</code>（区分大小写）</p> <!-- 可选提示 -->
         </div>
         <div id="content-container" style="display: none;">
           <div class="container">
@@ -54,11 +55,15 @@ export async function onRequest(context) {
           </div>
         </div>
         <script>
-          window.env = window.env || {};
-          window.env.API_URL = '${context.env.API_URL || 'https://yxmys-kv-manager-sign.qldyf.workers.dev'}';
-          window.env.SECRET = '${context.env.SECRET || '666'}';
-          window.env.LOGIN_PASSWORD = '${context.env.LOGIN_PASSWORD || 'mnqswahi'}';
-          console.log('Injected window.env:', JSON.stringify(window.env)); // 确保输出 JSON 格式
+          try {
+            window.env = window.env || {};
+            window.env.API_URL = '${context.env.API_URL || 'https://yxmys-kv-manager-sign.qldyf.workers.dev'}';
+            window.env.SECRET = '${context.env.SECRET || '666'}';
+            window.env.LOGIN_PASSWORD = '${context.env.LOGIN_PASSWORD || 'mnqswahi'}';
+            console.log('Injected window.env:', JSON.stringify(window.env)); // 调试：输出注入的环境变量
+          } catch (error) {
+            console.error('Error injecting window.env:', error);
+          }
         </script>
         <script src="/script.js"></script>
       </body>
