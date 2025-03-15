@@ -1,25 +1,25 @@
 body {
   font-family: Arial, sans-serif;
+  background-color: #f0f2f5;
   margin: 0;
   padding: 20px;
-  background-color: #f4f4f4;
 }
 
-#login-container, #content-container {
-  max-width: 1000px;
+.container {
+  max-width: 800px;
   margin: 0 auto;
   background: white;
   padding: 20px;
-  border-radius: 5px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
-}
-
-h1 {
-  text-align: center;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .section {
   margin-bottom: 20px;
+}
+
+h1, h2 {
+  color: #333;
 }
 
 form {
@@ -59,33 +59,10 @@ table {
 
 th, td {
   padding: 10px;
-  border: 1px solid #ddd;
   text-align: left;
+  border-bottom: 1px solid #ddd;
 }
 
 th {
-  background-color: #f8f8f8;
-}
-
-button.edit, button.delete {
-  padding: 5px 10px;
-  margin-right: 5px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-button.edit {
-  background-color: #28a745;
-}
-
-button.delete {
-  background-color: #dc3545;
-}
-
-button.edit:hover {
-  background-color: #218838;
-}
-
-button.delete:hover {
-  background-color: #c82333;
+  background-color: #f5f5f5;
 }
