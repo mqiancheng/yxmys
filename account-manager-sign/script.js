@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('content-container').style.display = 'block';
       loadAccounts();
     } else {
-      console.log('Password incorrect, expected:', LOGIN_PASSWORD, 'got:', password);
+      console.log('Password incorrect, expected:', LOGIN_PASSWORD, 'got:', password, 'types:', { password: typeof password, LOGIN_PASSWORD: typeof LOGIN_PASSWORD });
       alert('密码错误！请检查拼写，正确密码为: ' + LOGIN_PASSWORD);
     }
   });
