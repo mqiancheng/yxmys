@@ -11,7 +11,7 @@ export async function onRequest(context) {
         <link rel="stylesheet" href="/styles.css">
       </head>
       <body>
-        <div id="login-container" style="display: none;">
+        <div id="login-container" style="display: block;">
           <h2>登录</h2>
           <form id="login-form">
             <label>密码:</label>
@@ -56,7 +56,8 @@ export async function onRequest(context) {
         <script>
           window.env = {
             API_URL: '${context.env.API_URL}',
-            SECRET: '${context.env.SECRET}'
+            SECRET: '${context.env.SECRET}',
+            LOGIN_PASSWORD: '${context.env.LOGIN_PASSWORD}'
           };
         </script>
         <script src="/script.js"></script>
