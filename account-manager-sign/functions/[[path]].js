@@ -65,7 +65,7 @@ export async function onRequest(context) {
             console.error('Error injecting window.env:', error);
           }
         </script>
-        <script src="/script.js" defer></script> <!-- 添加 defer 确保在 DOM 加载后执行 -->
+        <script src="/script.js" defer></script> <!-- defer 确保在 DOM 加载后执行 -->
       </body>
       </html>
     `;
