@@ -3,7 +3,7 @@ window.env = window.env || {};
 console.log('Initial window.env:', JSON.stringify(window.env)); // 调试：输出初始 window.env
 
 // 登录密码（从环境变量获取）
-const LOGIN_PASSWORD = window.env.LOGIN_PASSWORD || 'mnqswahi'; // 默认值与环境变量保持一致
+const LOGIN_PASSWORD = (window.env.LOGIN_PASSWORD || 'mnqswahi').toString().trim(); // 确保为字符串并去除空格
 console.log('LOGIN_PASSWORD:', LOGIN_PASSWORD); // 调试：输出实际密码值
 
 // 确保 DOM 加载后绑定事件
@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const passwordInput = document.getElementById('login-password');
     const password = passwordInput ? passwordInput.value.trim() : '';
     console.log('Entered password:', password); // 调试：输出用户输入的密码
-    if (password === LOGIN_PASSWORD) {
+    if (typeof password === 'string' && typeof LOGIN_PASSWORD === 'string' && password === LOGIN_PASSWORD) {
       console.log('Password correct, logging in...');
       document.getElementById('login-container').style.display = 'none';
       document.getElementById('content-container').style.display = 'block';
