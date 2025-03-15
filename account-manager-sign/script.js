@@ -2,35 +2,9 @@
 window.env = window.env || {};
 console.log('Initial window.env:', JSON.stringify(window.env)); // 调试：输出初始 window.env
 
-// 登录密码（从环境变量获取）
-const LOGIN_PASSWORD = (window.env.LOGIN_PASSWORD || 'mnqswahi').toString().trim().replace(/\s+/g, ''); // 确保为字符串并去除所有空白字符
-console.log('LOGIN_PASSWORD:', LOGIN_PASSWORD, 'length:', LOGIN_PASSWORD.length); // 调试：输出实际密码值和长度
-
-// 确保 DOM 加载后绑定事件
+// 自动加载账号列表
 document.addEventListener('DOMContentLoaded', () => {
-  const loginForm = document.getElementById('login-form');
-  if (!loginForm) {
-    console.error('Login form not found!');
-    return;
-  }
-
-  loginForm.addEventListener('submit', function(e) {
-    e.preventDefault();
-    console.log('Login form submitted'); // 调试：确认事件触发
-    const passwordInput = document.getElementById('login-password');
-    const password = passwordInput ? passwordInput.value.trim().replace(/\s+/g, '') : '';
-    console.log('Entered password:', password, 'length:', password.length); // 调试：输出用户输入的密码和长度
-    console.log('Comparing:', { password, LOGIN_PASSWORD }); // 调试：输出比较值
-    if (typeof password === 'string' && typeof LOGIN_PASSWORD === 'string' && password === LOGIN_PASSWORD) {
-      console.log('Password correct, logging in...');
-      document.getElementById('login-container').style.display = 'none';
-      document.getElementById('content-container').style.display = 'block';
-      loadAccounts();
-    } else {
-      console.log('Password incorrect, expected:', LOGIN_PASSWORD, 'got:', password, 'types:', { password: typeof password, LOGIN_PASSWORD: typeof LOGIN_PASSWORD });
-      alert('密码错误！请检查拼写，正确密码为: ' + LOGIN_PASSWORD);
-    }
-  });
+  loadAccounts();
 });
 
 // 加载账号列表
@@ -70,7 +44,7 @@ async function loadAccounts() {
   }
 }
 
-// 添加账号（保持原有逻辑，略去重复代码）
+// 添加账号
 document.getElementById('add-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const formData = new FormData(e.target);
@@ -101,6 +75,57 @@ document.getElementById('add-form').addEventListener('submit', async (e) => {
   }
 });
 
-// 删除账号和编辑账号（保持原有逻辑，略去重复代码）
-async function deleteAccount(appPst) { /* ... */ }
-async function editAccount(appPst) { /* ... */ }
+// 删除账号
+async function deleteAccount(appPst) {
+  if (confirm('确定删除此账号？')) {
+    try {
+      const apiUrl = window.env.API_URL || 'https://yxmys-kv-manager-sign.qldyf.workers.dev';
+      const secret = window.env.SECRET || '666';
+      const response = await fetch(`${apiUrl}/accounts/${appPst}?secret=${secret}`, {
+        method: 'DELETE'
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to delete account: ${response.status} ${response.statusText}`);
+      }
+      alert('账号删除成功！');
+      loadAccounts();
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      alert('删除账号失败：' + error.message);
+    }
+  }
+}
+
+// 编辑账号（简单示例，需根据需求完善）
+async function editAccount(appPst) {
+  const newAppPst = prompt('输入新的 appPst:', appPst);
+  const newSctKey = prompt('输入新的 sctKey (可选):');
+  const newStartDate = prompt('输入新的开始日期 (YYYY-MM-DD):');
+  const newSignDays = prompt('输入新的签到天数:');
+
+  if (newAppPst && newStartDate && newSignDays) {
+    const updatedAccount = {
+      appPst: newAppPst,
+      sctKey: newSctKey || undefined,
+      startDate: newStartDate,
+      signDays: parseInt(newSignDays)
+    };
+    try {
+      const apiUrl = window.env.API_URL || 'https://yxmys-kv-manager-sign.qldyf.workers.dev';
+      const secret = window.env.SECRET || '666';
+      const response = await fetch(`${apiUrl}/accounts/${appPst}?secret=${secret}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedAccount)
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to update account: ${response.status} ${response.statusText}`);
+      }
+      alert('账号更新成功！');
+      loadAccounts();
+    } catch (error) {
+      console.error('Error updating account:', error);
+      alert('更新账号失败：' + error.message);
+    }
+  }
+}
