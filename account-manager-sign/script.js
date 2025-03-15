@@ -3,8 +3,8 @@ window.env = window.env || {};
 console.log('Initial window.env:', JSON.stringify(window.env)); // 调试：输出初始 window.env
 
 // 登录密码（从环境变量获取）
-const LOGIN_PASSWORD = (window.env.LOGIN_PASSWORD || 'mnqswahi').toString().trim(); // 确保为字符串并去除空格
-console.log('LOGIN_PASSWORD:', LOGIN_PASSWORD); // 调试：输出实际密码值
+const LOGIN_PASSWORD = (window.env.LOGIN_PASSWORD || 'mnqswahi').toString().trim().replace(/\s+/g, ''); // 确保为字符串并去除所有空白字符
+console.log('LOGIN_PASSWORD:', LOGIN_PASSWORD, 'length:', LOGIN_PASSWORD.length); // 调试：输出实际密码值和长度
 
 // 确保 DOM 加载后绑定事件
 document.addEventListener('DOMContentLoaded', () => {
@@ -18,8 +18,9 @@ document.addEventListener('DOMContentLoaded', () => {
     e.preventDefault();
     console.log('Login form submitted'); // 调试：确认事件触发
     const passwordInput = document.getElementById('login-password');
-    const password = passwordInput ? passwordInput.value.trim() : '';
-    console.log('Entered password:', password); // 调试：输出用户输入的密码
+    const password = passwordInput ? passwordInput.value.trim().replace(/\s+/g, '') : '';
+    console.log('Entered password:', password, 'length:', password.length); // 调试：输出用户输入的密码和长度
+    console.log('Comparing:', { password, LOGIN_PASSWORD }); // 调试：输出比较值
     if (typeof password === 'string' && typeof LOGIN_PASSWORD === 'string' && password === LOGIN_PASSWORD) {
       console.log('Password correct, logging in...');
       document.getElementById('login-container').style.display = 'none';
