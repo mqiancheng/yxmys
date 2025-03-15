@@ -1,6 +1,6 @@
 // 确保 window.env 存在
 window.env = window.env || {};
-console.log('Initial window.env:', window.env); // 调试：输出初始 window.env
+console.log('Initial window.env:', JSON.stringify(window.env)); // 调试：输出初始 window.env
 
 // 登录密码（从环境变量获取）
 const LOGIN_PASSWORD = window.env.LOGIN_PASSWORD || 'mnqswahi'; // 默认值与环境变量保持一致
@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('content-container').style.display = 'block';
       loadAccounts();
     } else {
-      console.log('Password incorrect');
+      console.log('Password incorrect, expected:', LOGIN_PASSWORD, 'got:', password);
       alert('密码错误！');
     }
   });
