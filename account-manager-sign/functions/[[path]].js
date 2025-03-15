@@ -1,5 +1,6 @@
 export async function onRequest(context) {
   console.log('onRequest triggered for:', context.request.url); // 调试：确认函数执行
+  console.log('Environment variables:', JSON.stringify(context.env)); // 调试：输出环境变量
   const url = new URL(context.request.url);
   if (url.pathname === '/') {
     const html = `
@@ -66,7 +67,7 @@ export async function onRequest(context) {
             console.error('Error injecting window.env:', error);
           }
         </script>
-        <script src="/script.js" defer></script> <!-- defer 确保在 DOM 加载后执行 -->
+        <script src="/script.js" defer></script>
       </body>
       </html>
     `;
