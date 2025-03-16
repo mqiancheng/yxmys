@@ -105,7 +105,7 @@
           </div>
           <div class="mb-3">
             <label for="newSignDays" class="form-label">签到天数</label>
-            <input type="number" class="form-control" id="newSignDays" placeholder="请输入签到天数" value="30">
+            <input type="number" class="form-control" id="newSignDays" placeholder="请输入签到天数" value="31">
           </div>
           <div class="mb-3">
             <label for="newRemark" class="form-label">备注</label>
@@ -120,9 +120,14 @@
       <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
           <h5 class="mb-0">账号列表</h5>
-          <button id="refreshBtn" class="btn btn-sm btn-outline-light">
-            <i class="bi bi-arrow-clockwise"></i> 刷新
-          </button>
+          <div>
+            <button id="signNowAllBtn" class="btn btn-sm btn-success me-2">
+              <i class="bi bi-check-circle"></i> 立即签到领取（全部）
+            </button>
+            <button id="refreshBtn" class="btn btn-sm btn-outline-light">
+              <i class="bi bi-arrow-clockwise"></i> 刷新
+            </button>
+          </div>
         </div>
         <div class="card-body">
           <div class="table-responsive">
@@ -198,6 +203,7 @@
   <script>
     // 全局变量
     const API_URL = 'https://yxmys-kv-manager-api.qldyf.workers.dev';
+    const WORKER_URL = 'https://yxmys-worker.qldyf.workers.dev';
     let password = localStorage.getItem('authPassword') || '';
     let accounts = [];
     let extractedAppPst = null;
@@ -219,6 +225,7 @@
       document.getElementById('addAccountBtn').addEventListener('click', addAccount);
       document.getElementById('refreshBtn').addEventListener('click', loadAccounts);
       document.getElementById('saveEditBtn').addEventListener('click', saveAccountEdit);
+      document.getElementById('signNowAllBtn').addEventListener('click', signNowAll);
 
       // 检查是否已登录
       if (password) {
@@ -408,7 +415,7 @@
           document.getElementById('newApiUrl').value = '';
           document.getElementById('newAccountName').value = '';
           document.getElementById('newSctKey').value = '';
-          document.getElementById('newSignDays').value = '30';
+          document.getElementById('newSignDays').value = '31';
           document.getElementById('newRemark').value = '';
           extractedAppPst = null;
           await loadAccounts();
@@ -560,6 +567,21 @@
         }
       } catch (error) {
         alert(`删除账号失败: ${error.message}`);
+      } finally {
+        hideLoading();
+      }
+    }
+
+    // 立即签到领取（全部账号）
+    async function signNowAll() {
+      showLoading();
+
+      try {
+        const response = await fetch(`${WORKER_URL}?manual=true`);
+        const result = await response.text();
+        alert(`签到和礼包领取结果：\n${result}`);
+      } catch (error) {
+        alert(`执行签到失败: ${error.message}`);
       } finally {
         hideLoading();
       }
