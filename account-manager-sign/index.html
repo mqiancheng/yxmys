@@ -166,12 +166,12 @@
             </div>
             <div class="mb-3">
               <label for="editStartDate" class="form-label">开始日期</label>
-              <input type="date" class="form-control" id="editStartDate">
+              <input type="date" class="form-control" id="editStartDate" disabled>
             </div>
             <div class="mb-3">
-              <label for="editSignDays" class="form-label">签到天数</label>
-              <input type="number" class="form-control" id="editSignDays" placeholder="请输入签到天数">
-              <small class="form-text text-muted">输入新的签到天数，系统会自动计算结束日期</small>
+              <label for="editSignDays" class="form-label">修改签到天数</label>
+              <input type="number" class="form-control" id="editSignDays" placeholder="输入正数增加，负数减少">
+              <small class="form-text text-muted">输入数字，系统将在原有天数上增减</small>
             </div>
             <div class="mb-3">
               <label for="editRemark" class="form-label">备注</label>
@@ -200,6 +200,7 @@
     const API_URL = 'https://yxmys-kv-manager-api.qldyf.workers.dev';
     let password = localStorage.getItem('authPassword') || '';
     let accounts = [];
+    let extractedAppPst = null;
     let editModal = null;
 
     // DOM元素
@@ -290,10 +291,7 @@
 
       accounts.forEach((account, index) => {
         const startDate = new Date(account.startDate);
-        const endDate = new Date(startDate);
-        endDate.setDate(startDate.getDate() + parseInt(account.signDays));
-        const endDateStr = endDate.toISOString().split('T')[0];
-
+        const endDate = new Date(account.endDate);
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         let remainingDays = 0;
@@ -305,8 +303,8 @@
         const row = document.createElement('tr');
         row.innerHTML = `
           <td class="editable" data-field="account" data-index="${index}">${account.account || '未命名账号'}</td>
-          <td>${account.startDate.split('T')[0]}</td>
-          <td>${endDateStr}</td>
+          <td>${startDate.toISOString().split('T')[0]}</td>
+          <td>${endDate.toISOString().split('T')[0]}</td>
           <td>${remainingDays}</td>
           <td class="editable" data-field="remark" data-index="${index}">${account.remark || ''}</td>
           <td>
@@ -354,7 +352,7 @@
 
       const appPstMatch = apiUrl.match(/app_pst=([^&]+)/);
       if (appPstMatch) {
-        window.extractedAppPst = appPstMatch[1];
+        extractedAppPst = appPstMatch[1];
         alert(`成功提取appPst: ${appPstMatch[1]}`);
       } else {
         alert('未找到appPst，请检查API地址');
@@ -363,18 +361,12 @@
 
     // 添加账号
     async function addAccount() {
-      const apiUrl = document.getElementById('newApiUrl').value.trim();
       const accountName = document.getElementById('newAccountName').value.trim();
       const sctKey = document.getElementById('newSctKey').value.trim();
       const signDays = parseInt(document.getElementById('newSignDays').value.trim());
       const remark = document.getElementById('newRemark').value.trim();
 
-      if (!apiUrl) {
-        alert('请输入API地址');
-        return;
-      }
-
-      if (!window.extractedAppPst) {
+      if (!extractedAppPst) {
         alert('请先提取appPst');
         return;
       }
@@ -389,19 +381,17 @@
       try {
         const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
-        const startDate = tomorrow.toISOString().split('T')[0];
+        const startDate = tomorrow.toISOString();
         const endDate = new Date(tomorrow);
         endDate.setDate(tomorrow.getDate() + signDays);
-        const endDateStr = endDate.toISOString();
 
         const accountData = {
-          api: apiUrl,
-          app_pst: window.extractedAppPst,
+          app_pst: extractedAppPst,
           account: accountName,
           sctKey: sctKey,
           signDays: signDays,
-          startDate: tomorrow.toISOString(),
-          endDate: endDateStr,
+          startDate: startDate,
+          endDate: endDate.toISOString(),
           remark: remark
         };
 
@@ -420,7 +410,7 @@
           document.getElementById('newSctKey').value = '';
           document.getElementById('newSignDays').value = '31';
           document.getElementById('newRemark').value = '';
-          window.extractedAppPst = null;
+          extractedAppPst = null;
           await loadAccounts();
         } else {
           alert('添加账号失败');
@@ -444,7 +434,7 @@
       document.getElementById('editAccountName').value = account.account || '';
       document.getElementById('editSctKey').value = account.sctKey || '';
       document.getElementById('editStartDate').value = account.startDate.split('T')[0];
-      document.getElementById('editSignDays').value = account.signDays;
+      document.getElementById('editSignDays').value = '';
       document.getElementById('editRemark').value = account.remark || '';
 
       editModal.show();
@@ -456,7 +446,7 @@
       const accountName = document.getElementById('editAccountName').value.trim();
       const sctKey = document.getElementById('editSctKey').value.trim();
       const startDate = document.getElementById('editStartDate').value;
-      const signDays = parseInt(document.getElementById('editSignDays').value);
+      const signDaysChange = parseInt(document.getElementById('editSignDays').value.trim()) || 0;
       const remark = document.getElementById('editRemark').value.trim();
 
       const account = accounts[index];
@@ -469,15 +459,21 @@
 
       try {
         const startDateObj = new Date(startDate);
+        const newSignDays = account.signDays + signDaysChange;
+        if (newSignDays <= 0) {
+          alert('签到天数不能小于或等于0');
+          return;
+        }
+
         const endDate = new Date(startDateObj);
-        endDate.setDate(startDateObj.getDate() + signDays);
+        endDate.setDate(startDateObj.getDate() + newSignDays - 1);
 
         const updatedAccount = {
           ...account,
           account: accountName,
           sctKey: sctKey,
           startDate: startDateObj.toISOString(),
-          signDays: signDays,
+          signDays: newSignDays,
           endDate: endDate.toISOString(),
           remark: remark
         };
