@@ -89,6 +89,10 @@
     }
     #password-section {
       margin-bottom: 20px;
+      display: block;
+    }
+    #main-content {
+      display: none;
     }
   </style>
 </head>
@@ -106,49 +110,52 @@
       <button onclick="setPassword()">提交密码</button>
     </div>
 
-    <!-- 添加账号 -->
-    <div class="section">
-      <h2>添加账号</h2>
-      <div class="input-group">
-        <label>API地址</label>
-        <input type="text" id="api-input" placeholder="请输入游戏API地址">
+    <!-- 主内容（添加账号和账号列表） -->
+    <div id="main-content">
+      <!-- 添加账号 -->
+      <div class="section">
+        <h2>添加账号</h2>
+        <div class="input-group">
+          <label>API地址</label>
+          <input type="text" id="api-input" placeholder="请输入游戏API地址">
+        </div>
+        <div class="input-group">
+          <label>账号名称</label>
+          <input type="text" id="account-input" placeholder="请输入账号名称">
+        </div>
+        <div class="input-group">
+          <label>Server酱SCTKEY</label>
+          <input type="text" id="sctkey-input" placeholder="请输入Server酱SCTKEY">
+        </div>
+        <div class="input-group">
+          <label>签到天数</label>
+          <input type="number" id="sign-days" placeholder="请输入签到天数">
+        </div>
+        <div class="input-group">
+          <label>备注</label>
+          <input type="text" id="remark-input" placeholder="请输入备注信息">
+        </div>
+        <div class="input-group">
+          <label>提取appPst</label>
+          <button onclick="extractAppPst()">提取appPst</button>
+        </div>
+        <div class="button-group">
+          <button onclick="addAccount()">添加账号</button>
+        </div>
       </div>
-      <div class="input-group">
-        <label>账号名称</label>
-        <input type="text" id="account-input" placeholder="请输入账号名称">
-      </div>
-      <div class="input-group">
-        <label>Server酱SCTKEY</label>
-        <input type="text" id="sctkey-input" placeholder="请输入Server酱SCTKEY">
-      </div>
-      <div class="input-group">
-        <label>签到天数</label>
-        <input type="number" id="sign-days" placeholder="请输入签到天数">
-      </div>
-      <div class="input-group">
-        <label>备注</label>
-        <input type="text" id="remark-input" placeholder="请输入备注信息">
-      </div>
-      <div class="input-group">
-        <label>提取appPst</label>
-        <button onclick="extractAppPst()">提取appPst</button>
-      </div>
-      <div class="button-group">
-        <button onclick="addAccount()">添加账号</button>
-      </div>
-    </div>
 
-    <!-- 账号列表 -->
-    <div class="section">
-      <h2>账号列表 <button class="refresh-btn" onclick="loadAccounts()">刷新</button></h2>
-      <div id="account-list">
-        <!-- 动态生成账号列表 -->
+      <!-- 账号列表 -->
+      <div class="section">
+        <h2>账号列表 <button class="refresh-btn" onclick="loadAccounts()">刷新</button></h2>
+        <div id="account-list">
+          <!-- 动态生成账号列表 -->
+        </div>
       </div>
     </div>
   </div>
 
   <script>
-    const API_URL = 'https://yxmys-kv-manager-sign.qldyf.workers.dev';
+    const API_URL = 'https://yxmys-kv-manager-api.qldyf.workers.dev';
     let password = sessionStorage.getItem('authPassword') || '';
 
     // 设置密码
@@ -157,8 +164,9 @@
       if (inputPassword === '666') {
         password = inputPassword;
         sessionStorage.setItem('authPassword', password);
-        alert('密码验证成功！');
-        document.getElementById('password-section').style.display = 'none'; // 隐藏密码输入框
+        document.getElementById('password-section').style.display = 'none';
+        document.getElementById('main-content').style.display = 'block';
+        loadAccounts(); // 加载账号列表
       } else {
         alert('密码错误，请输入正确的密码（666）');
       }
@@ -341,6 +349,7 @@
     window.onload = () => {
       if (password) {
         document.getElementById('password-section').style.display = 'none';
+        document.getElementById('main-content').style.display = 'block';
         loadAccounts();
       }
     };
