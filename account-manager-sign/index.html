@@ -87,11 +87,24 @@
     .refresh-btn:hover {
       background: #218838;
     }
+    #password-section {
+      margin-bottom: 20px;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>英雄没有闪签到管理系统</h1>
+
+    <!-- 密码输入 -->
+    <div class="section" id="password-section">
+      <h2>输入密码</h2>
+      <div class="input-group">
+        <label>密码</label>
+        <input type="password" id="password-input" placeholder="请输入密码">
+      </div>
+      <button onclick="setPassword()">提交密码</button>
+    </div>
 
     <!-- 添加账号 -->
     <div class="section">
@@ -135,8 +148,21 @@
   </div>
 
   <script>
-    const API_URL = 'https://yxmys-kv-manager-sign.qldyf.workers.dev'; // 环境变量已配置
-    const SECRET = '666'; // 环境变量已配置
+    const API_URL = 'https://yxmys-kv-manager-sign.qldyf.workers.dev';
+    let password = sessionStorage.getItem('authPassword') || '';
+
+    // 设置密码
+    function setPassword() {
+      const inputPassword = document.getElementById('password-input').value;
+      if (inputPassword === '666') {
+        password = inputPassword;
+        sessionStorage.setItem('authPassword', password);
+        alert('密码验证成功！');
+        document.getElementById('password-section').style.display = 'none'; // 隐藏密码输入框
+      } else {
+        alert('密码错误，请输入正确的密码（666）');
+      }
+    }
 
     // 提取appPst
     function extractAppPst() {
@@ -151,6 +177,11 @@
 
     // 添加账号
     async function addAccount() {
+      if (!password) {
+        alert('请先输入正确的密码！');
+        return;
+      }
+
       const api = document.getElementById('api-input').value;
       const appPstMatch = api.match(/app_pst=([^&]+)/);
       const appPst = appPstMatch ? appPstMatch[1] : '';
@@ -178,54 +209,72 @@
         remark: document.getElementById('remark-input').value
       };
 
-      const response = await fetch(API_URL, {
-        method: 'POST',
-        headers: {
-          'Authorization': SECRET,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(accountData)
-      });
+      try {
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: {
+            'Authorization': password,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(accountData)
+        });
 
-      if (response.ok) {
-        alert('账号添加成功');
-        loadAccounts();
-      } else {
-        alert('添加失败');
+        if (response.ok) {
+          alert('账号添加成功');
+          loadAccounts(); // 刷新账号列表
+        } else {
+          const errorText = await response.text();
+          alert(`添加失败: ${errorText}`);
+        }
+      } catch (error) {
+        alert(`请求出错: ${error.message}`);
       }
     }
 
     // 加载账号列表
     async function loadAccounts() {
-      const response = await fetch(API_URL, {
-        headers: { 'Authorization': SECRET }
-      });
-      const accounts = await response.json();
-      const accountList = document.getElementById('account-list');
-      accountList.innerHTML = '';
+      if (!password) {
+        alert('请先输入正确的密码！');
+        return;
+      }
 
-      accounts.forEach((account, index) => {
-        const endDate = new Date(account.endDate);
-        const currentDate = new Date();
-        const remainingDays = Math.max(0, Math.ceil((endDate - currentDate) / (1000 * 60 * 60 * 24)));
+      try {
+        const response = await fetch(API_URL, {
+          headers: { 'Authorization': password }
+        });
+        const accounts = await response.json();
+        const accountList = document.getElementById('account-list');
+        accountList.innerHTML = '';
 
-        const accountItem = document.createElement('div');
-        accountItem.className = 'account-item';
-        accountItem.innerHTML = `
-          <span>账号: <input value="${account.account}" onchange="updateAccount(${index}, 'account', this.value)" /></span>
-          <span>开始日期: ${new Date(account.startDate).toLocaleDateString()}</span>
-          <span>结束日期: ${endDate.toLocaleDateString()}</span>
-          <span>剩余天数: ${remainingDays}</span>
-          <span>备注: <input value="${account.remark}" onchange="updateAccount(${index}, 'remark', this.value)" /></span>
-          <button onclick="editAccount(${index})">编辑天数</button>
-          <button onclick="deleteAccount(${index})">删除</button>
-        `;
-        accountList.appendChild(accountItem);
-      });
+        accounts.forEach((account, index) => {
+          const endDate = new Date(account.endDate);
+          const currentDate = new Date();
+          const remainingDays = Math.max(0, Math.ceil((endDate - currentDate) / (1000 * 60 * 60 * 24)));
+
+          const accountItem = document.createElement('div');
+          accountItem.className = 'account-item';
+          accountItem.innerHTML = `
+            <span>账号: <input value="${account.account}" onchange="updateAccount(${index}, 'account', this.value)" /></span>
+            <span>开始日期: ${new Date(account.startDate).toLocaleDateString()}</span>
+            <span>结束日期: ${endDate.toLocaleDateString()}</span>
+            <span>剩余天数: ${remainingDays}</span>
+            <span>备注: <input value="${account.remark}" onchange="updateAccount(${index}, 'remark', this.value)" /></span>
+            <button onclick="editAccount(${index})">编辑天数</button>
+            <button onclick="deleteAccount(${index})">删除</button>
+          `;
+          accountList.appendChild(accountItem);
+        });
+      } catch (error) {
+        alert(`加载失败: ${error.message}`);
+      }
     }
 
     // 更新账号信息
     async function updateAccount(index, field, value) {
+      if (!password) {
+        alert('请先输入正确的密码！');
+        return;
+      }
       const accounts = await fetchAccounts();
       accounts[index][field] = value;
       await saveAccounts(accounts);
@@ -234,6 +283,10 @@
 
     // 编辑签到天数
     async function editAccount(index) {
+      if (!password) {
+        alert('请先输入正确的密码！');
+        return;
+      }
       const newSignDays = prompt('请输入新的签到天数：');
       if (newSignDays) {
         const accounts = await fetchAccounts();
@@ -250,6 +303,10 @@
 
     // 删除账号
     async function deleteAccount(index) {
+      if (!password) {
+        alert('请先输入正确的密码！');
+        return;
+      }
       if (confirm('确定删除该账号？')) {
         const accounts = await fetchAccounts();
         accounts.splice(index, 1);
@@ -260,26 +317,33 @@
 
     // 获取账号列表
     async function fetchAccounts() {
+      if (!password) throw new Error('请先输入密码');
       const response = await fetch(API_URL, {
-        headers: { 'Authorization': SECRET }
+        headers: { 'Authorization': password }
       });
       return await response.json();
     }
 
     // 保存账号列表
     async function saveAccounts(accounts) {
+      if (!password) throw new Error('请先输入密码');
       await fetch(API_URL, {
         method: 'PUT',
         headers: {
-          'Authorization': SECRET,
+          'Authorization': password,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(accounts)
       });
     }
 
-    // 页面加载时加载账号
-    window.onload = loadAccounts;
+    // 页面加载时检查密码
+    window.onload = () => {
+      if (password) {
+        document.getElementById('password-section').style.display = 'none';
+        loadAccounts();
+      }
+    };
   </script>
 </body>
 </html>
