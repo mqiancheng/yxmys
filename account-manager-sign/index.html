@@ -4,180 +4,358 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>英雄没有闪签到管理系统</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
   <style>
     body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-      background-color: #f5f5f5;
+      background-color: #f8f9fa;
+      padding-top: 20px;
     }
-    .container {
-      max-width: 800px;
-      margin: 0 auto;
-      background: #fff;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    }
-    h1 {
-      text-align: center;
+    .card {
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       margin-bottom: 20px;
     }
-    .section {
-      margin-bottom: 20px;
-      padding: 10px;
-      background: #f9f9f9;
-      border-radius: 5px;
+    .card-header {
+      background-color: #6c757d;
+      color: white;
+      border-radius: 10px 10px 0 0 !important;
     }
-    .section h2 {
-      font-size: 18px;
-      margin-bottom: 10px;
-      background: #e0e0e0;
-      padding: 5px 10px;
-      border-radius: 3px;
+    .btn-primary {
+      background-color: #007bff;
+      border-color: #007bff;
     }
-    .input-group {
-      margin-bottom: 10px;
+    .btn-danger {
+      background-color: #dc3545;
+      border-color: #dc3545;
     }
-    .input-group label {
-      display: block;
-      margin-bottom: 5px;
+    .btn-success {
+      background-color: #28a745;
+      border-color: #28a745;
     }
-    .input-group input {
+    .form-control:focus {
+      border-color: #80bdff;
+      box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+    .table th {
+      background-color: #f8f9fa;
+    }
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
       width: 100%;
-      padding: 8px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      box-sizing: border-box;
-    }
-    .button-group {
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
       display: flex;
-      gap: 10px;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
     }
-    button {
-      padding: 8px 16px;
-      background: #007bff;
-      color: #fff;
-      border: none;
-      border-radius: 4px;
+    .loading-spinner {
+      width: 3rem;
+      height: 3rem;
+    }
+    .editable {
       cursor: pointer;
     }
-    button:hover {
-      background: #0056b3;
-    }
-    .account-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px;
-      border-bottom: 1px solid #eee;
-    }
-    .account-item span {
-      flex: 1;
-    }
-    .account-item input {
-      width: 100%;
-      padding: 5px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-    }
-    .refresh-btn {
-      float: right;
-      background: #28a745;
-    }
-    .refresh-btn:hover {
-      background: #218838;
-    }
-    #password-section {
-      margin-bottom: 20px;
-      display: block;
-    }
-    #main-content {
-      display: none;
+    .editable:hover {
+      background-color: #f0f0f0;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>英雄没有闪签到管理系统</h1>
+    <h1 class="text-center mb-4">英雄没有闪签到管理系统</h1>
 
-    <!-- 密码输入 -->
-    <div class="section" id="password-section">
-      <h2>输入密码</h2>
-      <div class="input-group">
-        <label>密码</label>
-        <input type="password" id="password-input" placeholder="请输入密码">
+    <!-- 登录卡片 -->
+    <div id="loginCard" class="card mb-4">
+      <div class="card-header">
+        <h5 class="mb-0">系统登录</h5>
       </div>
-      <button onclick="setPassword()">提交密码</button>
+      <div class="card-body">
+        <div class="mb-3">
+          <label for="apiSecret" class="form-label">API密码</label>
+          <input type="password" class="form-control" id="apiSecret" placeholder="请输入API密码">
+        </div>
+        <button id="loginBtn" class="btn btn-primary">登录</button>
+      </div>
     </div>
 
-    <!-- 主内容（添加账号和账号列表） -->
-    <div id="main-content">
-      <!-- 添加账号 -->
-      <div class="section">
-        <h2>添加账号</h2>
-        <div class="input-group">
-          <label>API地址</label>
-          <input type="text" id="api-input" placeholder="请输入游戏API地址">
+    <!-- 主内容区 -->
+    <div id="mainContent" style="display: none;">
+      <!-- 添加新账号卡片 -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">添加新账号</h5>
         </div>
-        <div class="input-group">
-          <label>账号名称</label>
-          <input type="text" id="account-input" placeholder="请输入账号名称">
-        </div>
-        <div class="input-group">
-          <label>Server酱SCTKEY</label>
-          <input type="text" id="sctkey-input" placeholder="请输入Server酱SCTKEY">
-        </div>
-        <div class="input-group">
-          <label>签到天数</label>
-          <input type="number" id="sign-days" placeholder="请输入签到天数">
-        </div>
-        <div class="input-group">
-          <label>备注</label>
-          <input type="text" id="remark-input" placeholder="请输入备注信息">
-        </div>
-        <div class="input-group">
-          <label>提取appPst</label>
-          <button onclick="extractAppPst()">提取appPst</button>
-        </div>
-        <div class="button-group">
-          <button onclick="addAccount()">添加账号</button>
+        <div class="card-body">
+          <div class="mb-3">
+            <label for="newApiUrl" class="form-label">API地址</label>
+            <input type="text" class="form-control" id="newApiUrl" placeholder="请输入游戏API地址">
+            <small class="form-text text-muted">系统将自动提取appPst</small>
+          </div>
+          <div class="mb-3">
+            <label for="newAccountName" class="form-label">账号名称</label>
+            <input type="text" class="form-control" id="newAccountName" placeholder="请输入账号名称">
+          </div>
+          <div class="mb-3">
+            <label for="newSctKey" class="form-label">Server酱SCTKEY</label>
+            <input type="text" class="form-control" id="newSctKey" placeholder="请输入Server酱SCTKEY">
+          </div>
+          <div class="mb-3">
+            <label for="newSignDays" class="form-label">签到天数</label>
+            <input type="number" class="form-control" id="newSignDays" placeholder="请输入签到天数" value="31">
+          </div>
+          <div class="mb-3">
+            <label for="newRemark" class="form-label">备注</label>
+            <input type="text" class="form-control" id="newRemark" placeholder="请输入备注信息">
+          </div>
+          <button id="extractBtn" class="btn btn-secondary me-2">提取appPst</button>
+          <button id="addAccountBtn" class="btn btn-primary">添加账号</button>
         </div>
       </div>
 
-      <!-- 账号列表 -->
-      <div class="section">
-        <h2>账号列表 <button class="refresh-btn" onclick="loadAccounts()">刷新</button></h2>
-        <div id="account-list">
-          <!-- 动态生成账号列表 -->
+      <!-- 账号列表卡片 -->
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">账号列表</h5>
+          <button id="refreshBtn" class="btn btn-sm btn-outline-light">
+            <i class="bi bi-arrow-clockwise"></i> 刷新
+          </button>
         </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-striped table-hover">
+              <thead>
+                <tr>
+                  <th>账号名称</th>
+                  <th>开始日期</th>
+                  <th>结束日期</th>
+                  <th>剩余天数</th>
+                  <th>备注</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="accountsTableBody">
+                <!-- 账号数据将在这里动态加载 -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 编辑账号模态框 -->
+    <div class="modal fade" id="editAccountModal" tabindex="-1" aria-labelledby="editAccountModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="editAccountModalLabel">编辑账号</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="editAccountIndex">
+            <div class="mb-3">
+              <label for="editAccountName" class="form-label">账号名称</label>
+              <input type="text" class="form-control" id="editAccountName">
+            </div>
+            <div class="mb-3">
+              <label for="editSctKey" class="form-label">Server酱SCTKEY</label>
+              <input type="text" class="form-control" id="editSctKey">
+            </div>
+            <div class="mb-3">
+              <label for="editStartDate" class="form-label">开始日期</label>
+              <input type="date" class="form-control" id="editStartDate">
+            </div>
+            <div class="mb-3">
+              <label for="editSignDays" class="form-label">签到天数</label>
+              <input type="number" class="form-control" id="editSignDays" placeholder="请输入签到天数">
+              <small class="form-text text-muted">输入新的签到天数，系统会自动计算结束日期</small>
+            </div>
+            <div class="mb-3">
+              <label for="editRemark" class="form-label">备注</label>
+              <input type="text" class="form-control" id="editRemark">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+            <button type="button" class="btn btn-primary" id="saveEditBtn">保存</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 加载中遮罩 -->
+    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+      <div class="spinner-border text-light loading-spinner" role="status">
+        <span class="visually-hidden">加载中...</span>
       </div>
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
   <script>
+    // 全局变量
     const API_URL = 'https://yxmys-kv-manager-api.qldyf.workers.dev';
-    let password = sessionStorage.getItem('authPassword') || '';
+    let password = localStorage.getItem('authPassword') || '';
+    let accounts = [];
+    let editModal = null;
 
-    // 设置密码
-    function setPassword() {
-      const inputPassword = document.getElementById('password-input').value;
-      if (inputPassword === '666') {
-        password = inputPassword;
-        sessionStorage.setItem('authPassword', password);
-        document.getElementById('password-section').style.display = 'none';
-        document.getElementById('main-content').style.display = 'block';
-        loadAccounts(); // 加载账号列表
-      } else {
-        alert('密码错误，请输入正确的密码（666）');
+    // DOM元素
+    const loginCard = document.getElementById('loginCard');
+    const mainContent = document.getElementById('mainContent');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const accountsTableBody = document.getElementById('accountsTableBody');
+
+    // 初始化
+    document.addEventListener('DOMContentLoaded', () => {
+      editModal = new bootstrap.Modal(document.getElementById('editAccountModal'));
+
+      // 绑定事件
+      document.getElementById('loginBtn').addEventListener('click', login);
+      document.getElementById('extractBtn').addEventListener('click', extractAppPst);
+      document.getElementById('addAccountBtn').addEventListener('click', addAccount);
+      document.getElementById('refreshBtn').addEventListener('click', loadAccounts);
+      document.getElementById('saveEditBtn').addEventListener('click', saveAccountEdit);
+
+      // 检查是否已登录
+      if (password) {
+        loginCard.style.display = 'none';
+        mainContent.style.display = 'block';
+        loadAccounts();
       }
+    });
+
+    // 登录
+    async function login() {
+      const inputPassword = document.getElementById('apiSecret').value.trim();
+
+      if (!inputPassword) {
+        alert('请输入API密码');
+        return;
+      }
+
+      showLoading();
+
+      try {
+        const response = await fetch(`${API_URL}?password=${inputPassword}`);
+        if (response.ok) {
+          password = inputPassword;
+          localStorage.setItem('authPassword', password);
+          loginCard.style.display = 'none';
+          mainContent.style.display = 'block';
+          await loadAccounts();
+        } else {
+          alert('登录失败：密码错误');
+        }
+      } catch (error) {
+        alert(`连接API失败: ${error.message}`);
+      } finally {
+        hideLoading();
+      }
+    }
+
+    // 加载账号列表
+    async function loadAccounts() {
+      if (!password) return;
+
+      showLoading();
+
+      try {
+        const response = await fetch(`${API_URL}?password=${password}`);
+        if (response.ok) {
+          accounts = await response.json();
+          renderAccountsTable();
+        } else {
+          alert('获取账号列表失败');
+        }
+      } catch (error) {
+        alert(`加载账号列表失败: ${error.message}`);
+      } finally {
+        hideLoading();
+      }
+    }
+
+    // 渲染账号列表
+    function renderAccountsTable() {
+      accountsTableBody.innerHTML = '';
+
+      if (accounts.length === 0) {
+        const row = document.createElement('tr');
+        row.innerHTML = '<td colspan="6" class="text-center">暂无账号数据</td>';
+        accountsTableBody.appendChild(row);
+        return;
+      }
+
+      accounts.forEach((account, index) => {
+        const startDate = new Date(account.startDate);
+        const endDate = new Date(startDate);
+        endDate.setDate(startDate.getDate() + parseInt(account.signDays));
+        const endDateStr = endDate.toISOString().split('T')[0];
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        let remainingDays = 0;
+        if (endDate >= today) {
+          const diffTime = endDate.getTime() - today.getTime();
+          remainingDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        }
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td class="editable" data-field="account" data-index="${index}">${account.account || '未命名账号'}</td>
+          <td>${account.startDate.split('T')[0]}</td>
+          <td>${endDateStr}</td>
+          <td>${remainingDays}</td>
+          <td class="editable" data-field="remark" data-index="${index}">${account.remark || ''}</td>
+          <td>
+            <button class="btn btn-sm btn-primary edit-btn" data-index="${index}">编辑</button>
+            <button class="btn btn-sm btn-danger delete-btn" data-index="${index}">删除</button>
+          </td>
+        `;
+        accountsTableBody.appendChild(row);
+      });
+
+      // 绑定编辑和删除按钮事件
+      document.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.addEventListener('click', () => openEditModal(btn.dataset.index));
+      });
+
+      document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', () => deleteAccount(btn.dataset.index));
+      });
+
+      // 绑定可编辑字段事件
+      document.querySelectorAll('.editable').forEach(cell => {
+        cell.addEventListener('click', () => {
+          const field = cell.dataset.field;
+          const index = cell.dataset.index;
+          const account = accounts[index];
+
+          const currentValue = account[field] || '';
+          const newValue = prompt(`请输入新的${field === 'account' ? '账号名称' : '备注'}:`, currentValue);
+
+          if (newValue !== null && newValue !== currentValue) {
+            updateAccountField(index, field, newValue);
+          }
+        });
+      });
     }
 
     // 提取appPst
     function extractAppPst() {
-      const api = document.getElementById('api-input').value;
-      const appPstMatch = api.match(/app_pst=([^&]+)/);
+      const apiUrl = document.getElementById('newApiUrl').value.trim();
+
+      if (!apiUrl) {
+        alert('请输入API地址');
+        return;
+      }
+
+      const appPstMatch = apiUrl.match(/app_pst=([^&]+)/);
       if (appPstMatch) {
-        alert('提取的appPst: ' + appPstMatch[1]);
+        window.extractedAppPst = appPstMatch[1];
+        alert(`成功提取appPst: ${appPstMatch[1]}`);
       } else {
         alert('未找到appPst，请检查API地址');
       }
@@ -185,174 +363,221 @@
 
     // 添加账号
     async function addAccount() {
-      if (!password) {
-        alert('请先输入正确的密码！');
+      const apiUrl = document.getElementById('newApiUrl').value.trim();
+      const accountName = document.getElementById('newAccountName').value.trim();
+      const sctKey = document.getElementById('newSctKey').value.trim();
+      const signDays = parseInt(document.getElementById('newSignDays').value.trim());
+      const remark = document.getElementById('newRemark').value.trim();
+
+      if (!apiUrl) {
+        alert('请输入API地址');
         return;
       }
 
-      const api = document.getElementById('api-input').value;
-      const appPstMatch = api.match(/app_pst=([^&]+)/);
-      const appPst = appPstMatch ? appPstMatch[1] : '';
-
-      if (!appPst) {
-        alert('请提供有效的API地址，提取appPst失败');
+      if (!window.extractedAppPst) {
+        alert('请先提取appPst');
         return;
       }
 
-      const currentDate = new Date();
-      const startDate = new Date(currentDate);
-      startDate.setDate(currentDate.getDate() + 1); // 次日开始
-      const signDays = parseInt(document.getElementById('sign-days').value);
-      const endDate = new Date(startDate);
-      endDate.setDate(startDate.getDate() + signDays);
+      if (isNaN(signDays) || signDays <= 0) {
+        alert('请输入有效的签到天数');
+        return;
+      }
 
-      const accountData = {
-        api: api,
-        app_pst: appPst,
-        account: document.getElementById('account-input').value,
-        sctKey: document.getElementById('sctkey-input').value,
-        signDays: signDays,
-        startDate: startDate.toISOString(),
-        endDate: endDate.toISOString(),
-        remark: document.getElementById('remark-input').value
-      };
+      showLoading();
 
       try {
-        const response = await fetch(API_URL, {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const startDate = tomorrow.toISOString().split('T')[0];
+        const endDate = new Date(tomorrow);
+        endDate.setDate(tomorrow.getDate() + signDays);
+        const endDateStr = endDate.toISOString();
+
+        const accountData = {
+          api: apiUrl,
+          app_pst: window.extractedAppPst,
+          account: accountName,
+          sctKey: sctKey,
+          signDays: signDays,
+          startDate: tomorrow.toISOString(),
+          endDate: endDateStr,
+          remark: remark
+        };
+
+        const response = await fetch(`${API_URL}?password=${password}`, {
           method: 'POST',
           headers: {
-            'Authorization': password,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify(accountData)
         });
 
         if (response.ok) {
-          alert('账号添加成功');
-          loadAccounts(); // 刷新账号列表
+          alert('添加账号成功');
+          document.getElementById('newApiUrl').value = '';
+          document.getElementById('newAccountName').value = '';
+          document.getElementById('newSctKey').value = '';
+          document.getElementById('newSignDays').value = '31';
+          document.getElementById('newRemark').value = '';
+          window.extractedAppPst = null;
+          await loadAccounts();
         } else {
-          const errorText = await response.text();
-          alert(`添加失败: ${errorText}`);
+          alert('添加账号失败');
         }
       } catch (error) {
-        alert(`请求出错: ${error.message}`);
+        alert(`添加账号失败: ${error.message}`);
+      } finally {
+        hideLoading();
       }
     }
 
-    // 加载账号列表
-    async function loadAccounts() {
-      if (!password) {
-        alert('请先输入正确的密码！');
+    // 打开编辑模态框
+    function openEditModal(index) {
+      const account = accounts[index];
+      if (!account) {
+        alert('找不到账号数据');
         return;
       }
+
+      document.getElementById('editAccountIndex').value = index;
+      document.getElementById('editAccountName').value = account.account || '';
+      document.getElementById('editSctKey').value = account.sctKey || '';
+      document.getElementById('editStartDate').value = account.startDate.split('T')[0];
+      document.getElementById('editSignDays').value = account.signDays;
+      document.getElementById('editRemark').value = account.remark || '';
+
+      editModal.show();
+    }
+
+    // 保存账号编辑
+    async function saveAccountEdit() {
+      const index = document.getElementById('editAccountIndex').value;
+      const accountName = document.getElementById('editAccountName').value.trim();
+      const sctKey = document.getElementById('editSctKey').value.trim();
+      const startDate = document.getElementById('editStartDate').value;
+      const signDays = parseInt(document.getElementById('editSignDays').value);
+      const remark = document.getElementById('editRemark').value.trim();
+
+      const account = accounts[index];
+      if (!account) {
+        alert('找不到账号数据');
+        return;
+      }
+
+      showLoading();
 
       try {
-        const response = await fetch(API_URL, {
-          headers: { 'Authorization': password }
-        });
-        const accounts = await response.json();
-        const accountList = document.getElementById('account-list');
-        accountList.innerHTML = '';
+        const startDateObj = new Date(startDate);
+        const endDate = new Date(startDateObj);
+        endDate.setDate(startDateObj.getDate() + signDays);
 
-        accounts.forEach((account, index) => {
-          const endDate = new Date(account.endDate);
-          const currentDate = new Date();
-          const remainingDays = Math.max(0, Math.ceil((endDate - currentDate) / (1000 * 60 * 60 * 24)));
+        const updatedAccount = {
+          ...account,
+          account: accountName,
+          sctKey: sctKey,
+          startDate: startDateObj.toISOString(),
+          signDays: signDays,
+          endDate: endDate.toISOString(),
+          remark: remark
+        };
 
-          const accountItem = document.createElement('div');
-          accountItem.className = 'account-item';
-          accountItem.innerHTML = `
-            <span>账号: <input value="${account.account}" onchange="updateAccount(${index}, 'account', this.value)" /></span>
-            <span>开始日期: ${new Date(account.startDate).toLocaleDateString()}</span>
-            <span>结束日期: ${endDate.toLocaleDateString()}</span>
-            <span>剩余天数: ${remainingDays}</span>
-            <span>备注: <input value="${account.remark}" onchange="updateAccount(${index}, 'remark', this.value)" /></span>
-            <button onclick="editAccount(${index})">编辑天数</button>
-            <button onclick="deleteAccount(${index})">删除</button>
-          `;
-          accountList.appendChild(accountItem);
+        accounts[index] = updatedAccount;
+
+        const response = await fetch(`${API_URL}?password=${password}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(accounts)
         });
+
+        if (response.ok) {
+          alert('更新账号成功');
+          editModal.hide();
+          await loadAccounts();
+        } else {
+          alert('更新账号失败');
+        }
       } catch (error) {
-        alert(`加载失败: ${error.message}`);
+        alert(`更新账号失败: ${error.message}`);
+      } finally {
+        hideLoading();
       }
     }
 
-    // 更新账号信息
-    async function updateAccount(index, field, value) {
-      if (!password) {
-        alert('请先输入正确的密码！');
+    // 更新账号字段
+    async function updateAccountField(index, field, value) {
+      const account = accounts[index];
+      if (!account) {
+        alert('找不到账号数据');
         return;
       }
-      const accounts = await fetchAccounts();
-      accounts[index][field] = value;
-      await saveAccounts(accounts);
-      loadAccounts();
-    }
 
-    // 编辑签到天数
-    async function editAccount(index) {
-      if (!password) {
-        alert('请先输入正确的密码！');
-        return;
-      }
-      const newSignDays = prompt('请输入新的签到天数：');
-      if (newSignDays) {
-        const accounts = await fetchAccounts();
-        const account = accounts[index];
-        const startDate = new Date(account.startDate);
-        const endDate = new Date(startDate);
-        endDate.setDate(startDate.getDate() + parseInt(newSignDays));
-        accounts[index].signDays = parseInt(newSignDays);
-        accounts[index].endDate = endDate.toISOString();
-        await saveAccounts(accounts);
-        loadAccounts();
+      showLoading();
+
+      try {
+        account[field] = value;
+
+        const response = await fetch(`${API_URL}?password=${password}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(accounts)
+        });
+
+        if (response.ok) {
+          await loadAccounts();
+        } else {
+          alert('更新账号失败');
+        }
+      } catch (error) {
+        alert(`更新账号失败: ${error.message}`);
+      } finally {
+        hideLoading();
       }
     }
 
     // 删除账号
     async function deleteAccount(index) {
-      if (!password) {
-        alert('请先输入正确的密码！');
-        return;
-      }
-      if (confirm('确定删除该账号？')) {
-        const accounts = await fetchAccounts();
+      if (!confirm('确定要删除此账号吗？')) return;
+
+      showLoading();
+
+      try {
         accounts.splice(index, 1);
-        await saveAccounts(accounts);
-        loadAccounts();
+
+        const response = await fetch(`${API_URL}?password=${password}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(accounts)
+        });
+
+        if (response.ok) {
+          alert('删除账号成功');
+          await loadAccounts();
+        } else {
+          alert('删除账号失败');
+        }
+      } catch (error) {
+        alert(`删除账号失败: ${error.message}`);
+      } finally {
+        hideLoading();
       }
     }
 
-    // 获取账号列表
-    async function fetchAccounts() {
-      if (!password) throw new Error('请先输入密码');
-      const response = await fetch(API_URL, {
-        headers: { 'Authorization': password }
-      });
-      return await response.json();
+    // 显示加载中遮罩
+    function showLoading() {
+      loadingOverlay.style.display = 'flex';
     }
 
-    // 保存账号列表
-    async function saveAccounts(accounts) {
-      if (!password) throw new Error('请先输入密码');
-      await fetch(API_URL, {
-        method: 'PUT',
-        headers: {
-          'Authorization': password,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(accounts)
-      });
+    // 隐藏加载中遮罩
+    function hideLoading() {
+      loadingOverlay.style.display = 'none';
     }
-
-    // 页面加载时检查密码
-    window.onload = () => {
-      if (password) {
-        document.getElementById('password-section').style.display = 'none';
-        document.getElementById('main-content').style.display = 'block';
-        loadAccounts();
-      }
-    };
   </script>
 </body>
 </html>
