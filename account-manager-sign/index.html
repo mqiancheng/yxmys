@@ -1,49 +1,50 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>账号管理</title>
-  <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-  <div class="container">
-    <h1>账号管理</h1>
-
-    <!-- 添加账号表单 -->
-    <div class="section">
-      <h2>添加新账号</h2>
-      <form id="add-form">
-        <label>appPst:</label>
-        <input type="text" name="appPst" required>
-        <label>sctKey（可选）:</label>
-        <input type="text" name="sctKey">
-        <label>开始日期 (YYYY-MM-DD):</label>
-        <input type="text" name="startDate" placeholder="2025-01-01" required>
-        <label>签到天数:</label>
-        <input type="number" name="signDays" required>
-        <button type="submit">添加账号</button>
-      </form>
-    </div>
-
-    <!-- 账号列表 -->
-    <div class="section">
-      <h2>账号列表</h2>
-      <table id="account-table">
-        <thead>
-          <tr>
-            <th>appPst</th>
-            <th>sctKey</th>
-            <th>开始日期</th>
-            <th>签到天数</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody id="account-list"></tbody>
-      </table>
-    </div>
+<!-- index.html -->
+<div class="account-list">
+  <!-- 动态生成账户列表 -->
+  <div class="account-item">
+    <span>账号: <input class="account-name" /></span>
+    <span>剩余天数: <span class="remaining-days"></span></span>
+    <span>结束日期: <span class="end-date"></span></span>
+    <span>备注: <input class="remark" /></span>
+    <button class="edit-btn">编辑</button>
+    <button class="delete-btn">删除</button>
   </div>
+</div>
 
-  <script src="script.js"></script>
-</body>
-</html>
+<div class="add-account">
+  <input type="text" placeholder="API" id="api-input" />
+  <input type="text" placeholder="账号" id="account-input" />
+  <input type="text" placeholder="SCT Key" id="sctkey-input" />
+  <input type="number" placeholder="签到天数" id="sign-days" />
+  <input type="text" placeholder="备注" id="remark-input" />
+  <button onclick="addAccount()">添加</button>
+</div>
+
+<script>
+async function addAccount() {
+  const api = document.getElementById('api-input').value;
+  const response = await fetch('https://yxmys-kv-manager-sign.qldyf.workers.dev', {
+    method: 'POST',
+    headers: {
+      'Authorization': '666',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      api: api,
+      account: document.getElementById('account-input').value,
+      sctKey: document.getElementById('sctkey-input').value,
+      signDays: document.getElementById('sign-days').value,
+      remark: document.getElementById('remark-input').value
+    })
+  });
+}
+
+// 页面加载时获取账户列表
+async function loadAccounts() {
+  const response = await fetch('https://yxmys-kv-manager-sign.qldyf.workers.dev', {
+    headers: { 'Authorization': '666' }
+  });
+  const accounts = await response.json();
+  // 更新DOM显示账户列表
+}
+</script>
