@@ -1,103 +1,86 @@
-const api = {
-    getKeyInfo(token) {
-        return fetch(`/api/getKeyInfo?token=${token}`).then(res => res.json()).catch(err => {
-            document.getElementById("phoneStatus").textContent = "错误: " + err.message;
-            throw err;
-        });
-    },
-    getPhone(token) {
-        return fetch(`/api/getPhone?token=${token}`).then(res => res.json()).catch(err => {
-            document.getElementById("phoneStatus").textContent = "错误: " + err.message;
-            throw err;
-        });
-    },
-    getCode(token) {
-        return fetch(`/api/getCode?token=${token}`).then(res => res.json()).catch(err => {
-            document.getElementById("codeStatus").textContent = "错误: " + err.message;
-            throw err;
-        });
-    }
-};
+let token = new URLSearchParams(window.location.search).get('token');
+let timeoutId;
 
-function getTokenFromUrl() {
-    return new URLSearchParams(window.location.search).get('token');
+function loadData() {
+    fetch(`/api/getKeyInfo?token=${token}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                document.getElementById('message').textContent = data.error;
+            } else {
+                const tokenData = data.data;
+                document.getElementById('phone').value = tokenData.phone || '';
+                document.getElementById('code').value = tokenData.yzm || '';
+                updateButtons(tokenData.status);
+            }
+        });
 }
 
-function copyToClipboard(text) {
-    const textArea = document.createElement("textarea");
-    textArea.value = text;
-    document.body.appendChild(textArea);
-    textArea.select();
-    document.execCommand('copy');
-    document.body.removeChild(textArea);
-}
+function updateButtons(status) {
+    const getPhoneBtn = document.getElementById('getPhoneBtn');
+    const changePhoneBtn = document.getElementById('changePhoneBtn');
+    const copyBtn = document.getElementById('copyBtn');
 
-let keyData = {};
-let pollInterval;
+    getPhoneBtn.disabled = status === 'code_received';
+    changePhoneBtn.disabled = status === 'code_received' || !status || status === 'unused';
+    copyBtn.disabled = !document.getElementById('phone').value || status === 'unused';
 
-async function loadData() {
-    const token = getTokenFromUrl();
-    if (!token) {
-        document.getElementById("phoneStatus").textContent = "缺少 Token";
-        return;
-    }
-
-    const res = await api.getKeyInfo(token);
-    if (!res.data) {
-        document.getElementById("phoneStatus").textContent = "无效的 Token";
-        return;
-    }
-
-    keyData = res.data;
-    document.getElementById("phone").value = keyData.phone || "未获取";
-    document.getElementById("code").value = keyData.yzm || "未收到验证码"; // 改为 yzm
-
-    switch (keyData.status) {
-        case "unused":
-            document.getElementById("getPhone").style.display = "";
-            document.getElementById("copyPhone").style.display = "none";
-            document.getElementById("phoneStatus").textContent = "点击取号开始";
-            break;
-        case "phone_assigned":
-            document.getElementById("getPhone").style.display = "none";
-            document.getElementById("copyPhone").style.display = "";
-            document.getElementById("codeStatus").textContent = "等待验证码...";
-            startPolling(); // 启动轮询
-            break;
-        case "code_received":
-            document.getElementById("getPhone").style.display = "none";
-            document.getElementById("copyPhone").style.display = "";
-            document.getElementById("copyCode").style.display = "";
-            document.getElementById("codeStatus").textContent = "已完成";
-            clearInterval(pollInterval);
-            break;
+    if (status === 'phone_assigned' && !timeoutId) {
+        startPolling();
     }
 }
 
 function startPolling() {
-    if (!pollInterval) {
-        pollInterval = setInterval(async () => {
-            if (keyData.status === "phone_assigned") {
-                await api.getCode(getTokenFromUrl());
-                loadData();
-            }
-        }, 5000); // 每 5 秒轮询一次
-    }
+    timeoutId = setTimeout(() => {
+        fetch(`/api/getCode?token=${token}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error === "等待验证码中") {
+                    document.getElementById('message').textContent = "等待验证码中...";
+                    startPolling(); // 继续轮询
+                } else {
+                    loadData();
+                    clearTimeout(timeoutId);
+                    timeoutId = null;
+                }
+            });
+    }, 2000); // 2秒轮询一次
+
+    setTimeout(() => {
+        if (document.getElementById('code').value === '' && timeoutId) {
+            document.getElementById('message').textContent = "60秒未收到验证码，请点击换号";
+            clearTimeout(timeoutId);
+            timeoutId = null;
+        }
+    }, 60000); // 60秒超时
 }
 
-document.getElementById("getPhone").addEventListener("click", async () => {
-    await api.getPhone(getTokenFromUrl());
-    loadData();
+document.getElementById('getPhoneBtn').addEventListener('click', () => {
+    fetch(`/api/getPhone?token=${token}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error === "未获取到手机号，请重试") {
+                document.getElementById('message').textContent = data.error;
+            } else {
+                loadData();
+            }
+        });
 });
 
-document.getElementById("copyPhone").addEventListener("click", () => {
-    copyToClipboard(document.getElementById("phone").value);
-    document.getElementById("phoneStatus").textContent = "手机号已复制";
+document.getElementById('changePhoneBtn').addEventListener('click', () => {
+    fetch(`/api/cancelPhone?token=${token}`)
+        .then(response => response.json())
+        .then(data => {
+            loadData();
+            document.getElementById('message').textContent = "号码已更换，请再次取号";
+        });
 });
 
-document.getElementById("copyCode").addEventListener("click", () => {
-    copyToClipboard(document.getElementById("code").value);
-    document.getElementById("codeStatus").textContent = "验证码已复制";
+document.getElementById('copyBtn').addEventListener('click', () => {
+    const phone = document.getElementById('phone').value;
+    navigator.clipboard.writeText(phone).then(() => {
+        document.getElementById('message').textContent = "手机号已复制";
+    });
 });
 
 loadData();
