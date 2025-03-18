@@ -50,7 +50,7 @@ async function loadData() {
 
     keyData = res.data;
     document.getElementById("phone").value = keyData.phone || "未获取";
-    document.getElementById("code").value = keyData.code || "未收到验证码";
+    document.getElementById("code").value = keyData.yzm || "未收到验证码"; // 改为 yzm
 
     switch (keyData.status) {
         case "unused":
@@ -62,6 +62,7 @@ async function loadData() {
             document.getElementById("getPhone").style.display = "none";
             document.getElementById("copyPhone").style.display = "";
             document.getElementById("codeStatus").textContent = "等待验证码...";
+            startPolling(); // 启动轮询
             break;
         case "code_received":
             document.getElementById("getPhone").style.display = "none";
@@ -70,6 +71,17 @@ async function loadData() {
             document.getElementById("codeStatus").textContent = "已完成";
             clearInterval(pollInterval);
             break;
+    }
+}
+
+function startPolling() {
+    if (!pollInterval) {
+        pollInterval = setInterval(async () => {
+            if (keyData.status === "phone_assigned") {
+                await api.getCode(getTokenFromUrl());
+                loadData();
+            }
+        }, 5000); // 每 5 秒轮询一次
     }
 }
 
@@ -87,12 +99,5 @@ document.getElementById("copyCode").addEventListener("click", () => {
     copyToClipboard(document.getElementById("code").value);
     document.getElementById("codeStatus").textContent = "验证码已复制";
 });
-
-pollInterval = setInterval(async () => {
-    if (keyData.status === "phone_assigned") {
-        await api.getCode(getTokenFromUrl());
-        loadData();
-    }
-}, 3000);
 
 loadData();
