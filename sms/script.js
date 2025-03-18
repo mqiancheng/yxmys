@@ -1,9 +1,9 @@
 let token = new URLSearchParams(window.location.search).get('token');
 let timeoutId;
-const baseUrl = window.location.origin; // 动态获取当前域名
+const baseUrl = window.location.origin;
 
-console.log("Token:", token); // 调试 token
-console.log("Base URL:", baseUrl); // 调试域名
+console.log("Token:", token);
+console.log("Base URL:", baseUrl);
 
 function loadData() {
     if (!token) {
@@ -13,7 +13,7 @@ function loadData() {
     fetch(`${baseUrl}/api/getKeyInfo?token=${token}`)
         .then(response => response.json())
         .then(data => {
-            console.log("KeyInfo response:", data); // 调试响应
+            console.log("KeyInfo response:", data);
             if (data.error) {
                 document.getElementById('message').textContent = data.error;
             } else {
@@ -63,7 +63,7 @@ function startPolling() {
         fetch(`${baseUrl}/api/getCode?token=${token}`)
             .then(response => response.json())
             .then(data => {
-                console.log("GetCode response:", data); // 调试响应
+                console.log("GetCode response:", data);
                 if (data.error === "等待验证码中") {
                     document.getElementById('message').textContent = "等待验证码中...";
                     startPolling();
@@ -91,7 +91,7 @@ function startPolling() {
 }
 
 document.getElementById('getPhoneBtn').addEventListener('click', () => {
-    console.log("GetPhone button clicked"); // 调试点击事件
+    console.log("GetPhone button clicked");
     const phone = document.getElementById('phone').value;
     if (phone) {
         navigator.clipboard.writeText(phone).then(() => {
@@ -101,7 +101,7 @@ document.getElementById('getPhoneBtn').addEventListener('click', () => {
         fetch(`${baseUrl}/api/getPhone?token=${token}`)
             .then(response => response.json())
             .then(data => {
-                console.log("GetPhone response:", data); // 调试响应
+                console.log("GetPhone response:", data);
                 if (data.error) {
                     document.getElementById('message').textContent = data.error;
                 } else {
@@ -122,23 +122,42 @@ document.getElementById('copyCodeBtn').addEventListener('click', () => {
     });
 });
 
-document.addEventListener('click', (e) => {
-    if (e.target && e.target.id === 'changePhoneBtn') {
-        fetch(`${baseUrl}/api/cancelPhone?token=${token}`)
-            .then(response => response.json())
-            .then(data => {
-                loadData();
-                document.getElementById('message').textContent = "号码已更换，请再次取号";
-            })
-            .catch(error => {
-                console.error("Change phone error:", error);
-                document.getElementById('message').textContent = "更换号码失败，请重试";
-            });
+// 独立绑定换号按钮事件
+const changePhoneBtnHandler = () => {
+    console.log("ChangePhone button clicked");
+    fetch(`${baseUrl}/api/cancelPhone?token=${token}`)
+        .then(response => response.json())
+        .then(data => {
+            loadData();
+            document.getElementById('message').textContent = "号码已更换，请再次取号";
+        })
+        .catch(error => {
+            console.error("Change phone error:", error);
+            document.getElementById('message').textContent = "更换号码失败，请重试";
+        });
+};
+
+// 动态绑定和解绑换号按钮事件
+function bindChangePhoneEvent() {
+    const changePhoneBtn = document.getElementById('changePhoneBtn');
+    if (changePhoneBtn) {
+        changePhoneBtn.removeEventListener('click', changePhoneBtnHandler); // 避免重复绑定
+        changePhoneBtn.addEventListener('click', changePhoneBtnHandler);
     }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    bindChangePhoneEvent(); // 页面加载时绑定
+    loadData();
 });
 
-if (!token) {
-    document.getElementById('message').textContent = "缺少 token 参数";
-} else {
-    loadData();
+// 每次更新按钮时重新绑定事件
+function rebindChangePhoneEvent() {
+    const changePhoneBtn = document.getElementById('changePhoneBtn');
+    if (changePhoneBtn) {
+        bindChangePhoneEvent();
+    }
 }
+
+updateButtons(); // 初始调用
+setInterval(rebindChangePhoneEvent, 1000); // 每秒检查并绑定
