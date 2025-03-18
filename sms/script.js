@@ -13,9 +13,15 @@ function loadData() {
         document.getElementById('message').textContent = "缺少 token 参数";
         return;
     }
-    document.getElementById('phone').value = cachedData.phone;
-    document.getElementById('code').value = cachedData.sms || ''; // 显示 sms 内容
-    updateButtons(cachedData.status);
+    const phoneInput = document.getElementById('phone');
+    const codeInput = document.getElementById('code');
+    if (phoneInput && codeInput) {
+        phoneInput.value = cachedData.phone;
+        codeInput.value = cachedData.sms || '';
+        updateButtons(cachedData.status);
+    } else {
+        console.error("phone or code input not found");
+    }
     if (!cachedData.phone && !cachedData.status) {
         document.getElementById('message').textContent = ""; // 新页面不立即提示错误
     }
@@ -31,9 +37,9 @@ function updateButtons(status) {
         return;
     }
 
-    if (document.getElementById('phone').value) {
+    if (document.getElementById('phone')?.value) {
         status = 'phone_assigned';
-    } else if (document.getElementById('code').value) {
+    } else if (document.getElementById('code')?.value) {
         status = 'code_received';
     }
 
@@ -67,7 +73,7 @@ function updateButtons(status) {
     }
 
     copyCodeBtn.textContent = '复制2';
-    copyCodeBtn.disabled = !cachedData.yzm; // 仅当 yzm 存在时启用
+    copyCodeBtn.disabled = !cachedData.yzm;
     copyCodeBtn.style.display = status === 'code_received' ? 'inline-block' : 'none';
 
     if (status === 'phone_assigned' && !timeoutId) {
@@ -82,17 +88,20 @@ function startPolling() {
     console.log("Starting polling for code...");
     timeoutId = setTimeout(() => {
         fetch(`${baseUrl}/api/getCode?token=${token}`)
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                return response.json();
+            })
             .then(data => {
                 console.log("GetCode response:", data);
                 if (data.error === "等待验证码中") {
                     document.getElementById('message').textContent = "等待验证码中...";
                     startPolling();
                 } else if (data.data && data.data.sms) {
-                    cachedData.sms = data.data.sms; // 显示完整短信
-                    cachedData.yzm = data.data.yzm;  // 验证码用于复制
+                    cachedData.sms = data.data.sms;
+                    cachedData.yzm = data.data.yzm;
                     cachedData.status = 'code_received';
-                    localStorage.setItem(`sms_${token}`, JSON.stringify(cachedData)); // 缓存1个月
+                    localStorage.setItem(`sms_${token}`, JSON.stringify(cachedData));
                     loadData();
                 }
             })
@@ -119,18 +128,16 @@ document.getElementById('getPhoneBtn').addEventListener('click', () => {
     setTimeout(() => {
         fetch(`${baseUrl}/api/getPhone?token=${token}`)
             .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 return response.json();
             })
             .then(data => {
                 console.log("GetPhone response:", data);
-                if (data.code === "0" && data.phone) {
-                    cachedData.phone = data.phone;
+                if (data.code === "0" && data.data && data.data.phone) {
+                    cachedData.phone = data.data.phone;
                     cachedData.status = 'phone_assigned';
                     cachedData.timestamp = Date.now();
-                    localStorage.setItem(`sms_${token}`, JSON.stringify(cachedData)); // 缓存1个月
+                    localStorage.setItem(`sms_${token}`, JSON.stringify(cachedData));
                     document.getElementById('message').textContent = data.msg || "成功";
                     loadData();
                 } else {
@@ -186,8 +193,11 @@ function bindChangePhoneEvent() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    bindChangePhoneEvent();
-    loadData();
+    // 确保 DOM 渲染完成后再加载数据
+    setTimeout(() => {
+        bindChangePhoneEvent();
+        loadData();
+    }, 100); // 100ms 延迟，确保 DOM 准备好
 });
 
 function rebindChangePhoneEvent() {
