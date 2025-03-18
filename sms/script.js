@@ -1,14 +1,16 @@
 let token = new URLSearchParams(window.location.search).get('token');
 let timeoutId;
+const baseUrl = window.location.origin; // 动态获取当前域名
 
 console.log("Token:", token); // 调试 token
+console.log("Base URL:", baseUrl); // 调试域名
 
 function loadData() {
     if (!token) {
         document.getElementById('message').textContent = "缺少 token 参数";
         return;
     }
-    fetch(`/api/getKeyInfo?token=${token}`)
+    fetch(`${baseUrl}/api/getKeyInfo?token=${token}`)
         .then(response => response.json())
         .then(data => {
             console.log("KeyInfo response:", data); // 调试响应
@@ -58,7 +60,7 @@ function updateButtons(status) {
 
 function startPolling() {
     timeoutId = setTimeout(() => {
-        fetch(`/api/getCode?token=${token}`)
+        fetch(`${baseUrl}/api/getCode?token=${token}`)
             .then(response => response.json())
             .then(data => {
                 console.log("GetCode response:", data); // 调试响应
@@ -96,7 +98,7 @@ document.getElementById('getPhoneBtn').addEventListener('click', () => {
             document.getElementById('message').textContent = "手机号已复制";
         });
     } else {
-        fetch(`/api/getPhone?token=${token}`)
+        fetch(`${baseUrl}/api/getPhone?token=${token}`)
             .then(response => response.json())
             .then(data => {
                 console.log("GetPhone response:", data); // 调试响应
@@ -122,7 +124,7 @@ document.getElementById('copyCodeBtn').addEventListener('click', () => {
 
 document.addEventListener('click', (e) => {
     if (e.target && e.target.id === 'changePhoneBtn') {
-        fetch(`/api/cancelPhone?token=${token}`)
+        fetch(`${baseUrl}/api/cancelPhone?token=${token}`)
             .then(response => response.json())
             .then(data => {
                 loadData();
