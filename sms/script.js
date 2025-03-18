@@ -5,37 +5,17 @@ const baseUrl = window.location.origin;
 console.log("Token:", token);
 console.log("Base URL:", baseUrl);
 
+// 从 localStorage 加载缓存数据
+let cachedData = JSON.parse(localStorage.getItem(`sms_${token}`)) || { phone: '', sms: '', yzm: '', status: 'unused' };
+
 function loadData() {
     if (!token) {
         document.getElementById('message').textContent = "缺少 token 参数";
         return;
     }
-    fetch(`${baseUrl}/api/getKeyInfo?token=${token}`)
-        .then(response => response.json())
-        .then(data => {
-            console.log("KeyInfo response:", data);
-            if (data.error) {
-                if (data.error.includes("未获取到手机号")) {
-                    document.getElementById('message').textContent = "未获取到手机号请重试*2";
-                } else {
-                    document.getElementById('message').textContent = "网络错误，请重试";
-                }
-            } else {
-                const tokenData = data.data;
-                document.getElementById('phone').value = tokenData.phone || '';
-                document.getElementById('code').value = tokenData.yzm || '';
-                if (tokenData.phone) {
-                    document.getElementById('message').textContent = "";
-                } else {
-                    document.getElementById('message').textContent = "获取到手机号请重试*1";
-                }
-                updateButtons(tokenData.status);
-            }
-        })
-        .catch(error => {
-            console.error("Load data error:", error);
-            document.getElementById('message').textContent = "网络错误，请重试";
-        });
+    document.getElementById('phone').value = cachedData.phone;
+    document.getElementById('code').value = cachedData.sms || ''; // 显示 sms 内容
+    updateButtons(cachedData.status);
 }
 
 function updateButtons(status) {
@@ -49,26 +29,47 @@ function updateButtons(status) {
     }
 
     if (document.getElementById('phone').value) {
-        status = 'phone_assigned'; // 强制设置状态
+        status = 'phone_assigned';
+    } else if (document.getElementById('code').value) {
+        status = 'code_received';
     }
 
+    getPhoneBtn.style.display = status === 'phone_assigned' ? 'none' : 'inline-block';
     if (status === 'phone_assigned' && !changePhoneBtn) {
         changePhoneBtn = document.createElement('button');
         changePhoneBtn.id = 'changePhoneBtn';
         changePhoneBtn.textContent = '换号';
-        changePhoneBtn.disabled = status === 'code_received';
         document.querySelector('.input-group:nth-child(1)').appendChild(changePhoneBtn);
-        bindChangePhoneEvent(); // 绑定换号事件
+        bindChangePhoneEvent();
     } else if (status !== 'phone_assigned' && changePhoneBtn) {
         changePhoneBtn.remove();
     }
 
-    getPhoneBtn.textContent = document.getElementById('phone').value ? '复制' : '取号';
-    getPhoneBtn.disabled = !!document.getElementById('phone').value; // 有手机号时禁用“取号”
-    copyCodeBtn.disabled = !document.getElementById('code').value || status !== 'code_received';
+    if (document.getElementById('phone').value) {
+        const copy1Btn = document.createElement('button');
+        copy1Btn.id = 'copy1Btn';
+        copy1Btn.textContent = '复制1';
+        if (!document.getElementById('copy1Btn')) {
+            document.querySelector('.input-group:nth-child(1)').appendChild(copy1Btn);
+        }
+        copy1Btn.addEventListener('click', () => {
+            navigator.clipboard.writeText(document.getElementById('phone').value).then(() => {
+                document.getElementById('message').textContent = "手机号已复制";
+            });
+        });
+    } else {
+        const copy1Btn = document.getElementById('copy1Btn');
+        if (copy1Btn) copy1Btn.remove();
+    }
+
+    copyCodeBtn.textContent = '复制2';
+    copyCodeBtn.disabled = !cachedData.yzm; // 仅当 yzm 存在时启用
+    copyCodeBtn.style.display = status === 'code_received' ? 'inline-block' : 'none';
 
     if (status === 'phone_assigned' && !timeoutId) {
         startPolling();
+    } else if (status === 'code_received' && changePhoneBtn) {
+        changePhoneBtn.remove();
     }
 }
 
@@ -82,10 +83,12 @@ function startPolling() {
                 if (data.error === "等待验证码中") {
                     document.getElementById('message').textContent = "等待验证码中...";
                     startPolling();
-                } else {
+                } else if (data.data && data.data.sms) {
+                    cachedData.sms = data.data.sms; // 显示完整短信
+                    cachedData.yzm = data.data.yzm;  // 验证码用于复制
+                    cachedData.status = 'code_received';
+                    localStorage.setItem(`sms_${token}`, JSON.stringify(cachedData)); // 缓存1个月
                     loadData();
-                    clearTimeout(timeoutId);
-                    timeoutId = null;
                 }
             })
             .catch(error => {
@@ -97,8 +100,8 @@ function startPolling() {
     }, 2000);
 
     setTimeout(() => {
-        if (document.getElementById('code').value === '' && timeoutId) {
-            document.getElementById('message').textContent = "60秒未收到验证码，请点击换号";
+        if (!document.getElementById('code').value && timeoutId) {
+            document.getElementById('message').textContent = "60秒未显示验证码，请点击【换号】";
             clearTimeout(timeoutId);
             timeoutId = null;
         }
@@ -107,42 +110,54 @@ function startPolling() {
 
 document.getElementById('getPhoneBtn').addEventListener('click', () => {
     console.log("GetPhone button clicked");
-    const phone = document.getElementById('phone').value;
-    if (phone) {
-        navigator.clipboard.writeText(phone).then(() => {
-            document.getElementById('message').textContent = "手机号已复制";
-        });
-    } else {
+    document.getElementById('message').textContent = "";
+    setTimeout(() => {
         fetch(`${baseUrl}/api/getPhone?token=${token}`)
             .then(response => response.json())
             .then(data => {
                 console.log("GetPhone response:", data);
-                if (data.error) {
-                    document.getElementById('message').textContent = data.error || "未知错误，请重试";
+                if (data.code === "0" && data.phone) {
+                    cachedData.phone = data.phone;
+                    cachedData.status = 'phone_assigned';
+                    cachedData.timestamp = Date.now();
+                    localStorage.setItem(`sms_${token}`, JSON.stringify(cachedData)); // 缓存1个月
+                    document.getElementById('message').textContent = data.msg;
+                    loadData();
                 } else {
-                    loadData(); // 强制刷新数据
+                    document.getElementById('message').textContent = `${data.msg || '未知错误'}，请重试`;
+                    setTimeout(() => {
+                        document.getElementById('message').textContent = "";
+                        setTimeout(() => {
+                            if (!document.getElementById('phone').value) {
+                                document.getElementById('message').textContent = `${data.msg || '未知错误'}，请重试`;
+                            }
+                        }, 500);
+                    }, 500);
                 }
             })
             .catch(error => {
                 console.error("Get phone error:", error);
                 document.getElementById('message').textContent = `获取手机号失败: ${error.message}`;
             });
-    }
+    }, 1000); // 1秒延迟
 });
 
 document.getElementById('copyCodeBtn').addEventListener('click', () => {
-    const code = document.getElementById('code').value;
-    navigator.clipboard.writeText(code).then(() => {
+    navigator.clipboard.writeText(cachedData.yzm || '').then(() => {
         document.getElementById('message').textContent = "验证码已复制";
     });
 });
 
-// 独立绑定换号按钮事件
 const changePhoneBtnHandler = () => {
     console.log("ChangePhone button clicked");
     fetch(`${baseUrl}/api/cancelPhone?token=${token}`)
         .then(response => response.json())
         .then(data => {
+            cachedData.phone = '';
+            cachedData.sms = '';
+            cachedData.yzm = '';
+            cachedData.status = 'unused';
+            localStorage.setItem(`sms_${token}`, JSON.stringify(cachedData));
             loadData();
             document.getElementById('message').textContent = "号码已更换，请再次取号";
         })
@@ -152,21 +167,19 @@ const changePhoneBtnHandler = () => {
         });
 };
 
-// 动态绑定和解绑换号按钮事件
 function bindChangePhoneEvent() {
     const changePhoneBtn = document.getElementById('changePhoneBtn');
     if (changePhoneBtn) {
-        changePhoneBtn.removeEventListener('click', changePhoneBtnHandler); // 避免重复绑定
+        changePhoneBtn.removeEventListener('click', changePhoneBtnHandler);
         changePhoneBtn.addEventListener('click', changePhoneBtnHandler);
     }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    bindChangePhoneEvent(); // 页面加载时绑定
+    bindChangePhoneEvent();
     loadData();
 });
 
-// 每次更新按钮时重新绑定事件
 function rebindChangePhoneEvent() {
     const changePhoneBtn = document.getElementById('changePhoneBtn');
     if (changePhoneBtn) {
@@ -174,5 +187,4 @@ function rebindChangePhoneEvent() {
     }
 }
 
-updateButtons(); // 初始调用
-setInterval(rebindChangePhoneEvent, 1000); // 每秒检查并绑定
+setInterval(rebindChangePhoneEvent, 1000);
