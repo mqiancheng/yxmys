@@ -1,6 +1,7 @@
 let token = new URLSearchParams(window.location.search).get('token');
 let timeoutId;
 const baseUrl = window.location.origin;
+let lastRequestTime = 0; // 记录最后一次请求时间
 
 console.log("Token:", token);
 console.log("Base URL:", baseUrl);
@@ -124,6 +125,11 @@ function startPolling() {
 
 document.getElementById('getPhoneBtn').addEventListener('click', () => {
     console.log("GetPhone button clicked");
+    const currentTime = Date.now();
+    if (currentTime - lastRequestTime < 6000) { // 6秒限制
+        document.getElementById('message').textContent = "请等待6秒后重试";
+        return;
+    }
     document.getElementById('message').textContent = "";
     setTimeout(() => {
         fetch(`${baseUrl}/api/getPhone?token=${token}`)
@@ -133,7 +139,7 @@ document.getElementById('getPhoneBtn').addEventListener('click', () => {
             })
             .then(data => {
                 console.log("GetPhone response:", data);
-                if (data.code === "0" && data.data && data.data.phone) {
+                if (data.data && data.data.phone) {
                     cachedData.phone = data.data.phone;
                     cachedData.status = 'phone_assigned';
                     cachedData.timestamp = Date.now();
@@ -151,10 +157,12 @@ document.getElementById('getPhoneBtn').addEventListener('click', () => {
                         }, 500);
                     }, 500);
                 }
+                lastRequestTime = currentTime; // 更新最后请求时间
             })
             .catch(error => {
                 console.error("Get phone error:", error);
                 document.getElementById('message').textContent = `网络错误: ${error.message}`;
+                lastRequestTime = currentTime; // 更新时间，即使失败也计时
             });
     }, 1000); // 1秒延迟
 });
@@ -176,7 +184,7 @@ const changePhoneBtnHandler = () => {
             cachedData.status = 'unused';
             localStorage.setItem(`sms_${token}`, JSON.stringify(cachedData));
             loadData();
-            document.getElementById('message').textContent = "号码已更换，请再次取号";
+            document.getElementById('message').textContent = "号码已更换，请再次取试";
         })
         .catch(error => {
             console.error("Change phone error:", error);
@@ -193,11 +201,10 @@ function bindChangePhoneEvent() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    // 确保 DOM 渲染完成后再加载数据
-    setTimeout(() => {
+    requestAnimationFrame(() => {
         bindChangePhoneEvent();
         loadData();
-    }, 100); // 100ms 延迟，确保 DOM 准备好
+    });
 });
 
 function rebindChangePhoneEvent() {
