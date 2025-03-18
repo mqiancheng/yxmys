@@ -1,86 +1,101 @@
-let token = new URLSearchParams(window.location.search).get('token');
-let timeoutId;
-
-function loadData() {
-    fetch(`/api/getKeyInfo?token=${token}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.error) {
-                document.getElementById('message').textContent = data.error;
-            } else {
-                const tokenData = data.data;
-                document.getElementById('phone').value = tokenData.phone || '';
-                document.getElementById('code').value = tokenData.yzm || '';
-                updateButtons(tokenData.status);
-            }
-        });
-}
-
-function updateButtons(status) {
-    const getPhoneBtn = document.getElementById('getPhoneBtn');
-    const changePhoneBtn = document.getElementById('changePhoneBtn');
-    const copyBtn = document.getElementById('copyBtn');
-
-    getPhoneBtn.disabled = status === 'code_received';
-    changePhoneBtn.disabled = status === 'code_received' || !status || status === 'unused';
-    copyBtn.disabled = !document.getElementById('phone').value || status === 'unused';
-
-    if (status === 'phone_assigned' && !timeoutId) {
-        startPolling();
-    }
-}
-
-function startPolling() {
-    timeoutId = setTimeout(() => {
-        fetch(`/api/getCode?token=${token}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.error === "等待验证码中") {
-                    document.getElementById('message').textContent = "等待验证码中...";
-                    startPolling(); // 继续轮询
-                } else {
-                    loadData();
-                    clearTimeout(timeoutId);
-                    timeoutId = null;
-                }
-            });
-    }, 2000); // 2秒轮询一次
-
-    setTimeout(() => {
-        if (document.getElementById('code').value === '' && timeoutId) {
-            document.getElementById('message').textContent = "60秒未收到验证码，请点击换号";
-            clearTimeout(timeoutId);
-            timeoutId = null;
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>接码服务</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
         }
-    }, 60000); // 60秒超时
-}
-
-document.getElementById('getPhoneBtn').addEventListener('click', () => {
-    fetch(`/api/getPhone?token=${token}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.error === "未获取到手机号，请重试") {
-                document.getElementById('message').textContent = data.error;
-            } else {
-                loadData();
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .input-group {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+        input {
+            flex: 1;
+            padding: 10px;
+            margin-right: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 15px;
+            margin: 0 5px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        #message {
+            color: red;
+            margin-top: 10px;
+        }
+        .footer {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #666;
+        }
+        @media (max-width: 600px) {
+            .container {
+                padding: 10px;
             }
-        });
-});
+            .footer {
+                font-size: 10px;
+            }
+            .input-group {
+                flex-direction: column;
+            }
+            button {
+                width: 100%;
+                margin: 5px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>接码服务</h2>
+        <div class="input-group">
+            <input type="text" id="phone" placeholder="手机号" readonly>
+            <button id="getPhoneBtn">取号</button>
+        </div>
+        <div class="input-group">
+            <input type="text" id="code" placeholder="验证码" readonly>
+            <button id="copyCodeBtn" disabled>复制</button>
+        </div>
+        <div id="message"></div>
+        <div class="footer">
+            !!!点击【取号】即可获取手机号，然后用获取的号码输入您需要使用的界面并点击发送验证码，超过60秒未显示验证码请点击【换号】重新获取号码。<br>
+            !!!取号后，在使用界面输入号码，并点击发送验证，跟您正常使用自己手机号一样，不点发送验证就没有码。<br>
+            !!!收不到验证码请看这里：<br>
+            1、每次取号有效时间只有180秒，时间太久了直接点击换号就行，否则容易因失效而收不到验证码。<br>
+            2、您拍的宝贝是否对应您使用的软件名字，宝贝仅能接收宝贝名字的验证码哟。<br>
+            注意事项：<br>
+            1.若该号码提示失效、失败、错误，请重新刷新解绑/换绑界面后继续原手机号及原验证码输入，不需要重新发送验证！请一定要在短信提示时间内使用哟。<br>
+            2.所提供的均为虚拟号，不可接收第二次接码，若有特殊情况需要第二次接验证码，请在24小时内联系人工！<br>
+            3.若进行解绑操作请注意，同一个产品下的所有游戏均会一起被解绑，如：米哈游旗下的游戏同账号存在原神及崩坏，那么在解绑原神的同时崩坏上的资料也会一并被解绑！
+        </div>
+    </div>
 
-document.getElementById('changePhoneBtn').addEventListener('click', () => {
-    fetch(`/api/cancelPhone?token=${token}`)
-        .then(response => response.json())
-        .then(data => {
-            loadData();
-            document.getElementById('message').textContent = "号码已更换，请再次取号";
-        });
-});
-
-document.getElementById('copyBtn').addEventListener('click', () => {
-    const phone = document.getElementById('phone').value;
-    navigator.clipboard.writeText(phone).then(() => {
-        document.getElementById('message').textContent = "手机号已复制";
-    });
-});
-
-loadData();
+    <script src="script.js"></script>
+</body>
+</html>
