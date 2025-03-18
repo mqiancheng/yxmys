@@ -1,10 +1,17 @@
 let token = new URLSearchParams(window.location.search).get('token');
 let timeoutId;
 
+console.log("Token:", token); // 调试 token
+
 function loadData() {
+    if (!token) {
+        document.getElementById('message').textContent = "缺少 token 参数";
+        return;
+    }
     fetch(`/api/getKeyInfo?token=${token}`)
         .then(response => response.json())
         .then(data => {
+            console.log("KeyInfo response:", data); // 调试响应
             if (data.error) {
                 document.getElementById('message').textContent = data.error;
             } else {
@@ -23,16 +30,21 @@ function loadData() {
 function updateButtons(status) {
     const getPhoneBtn = document.getElementById('getPhoneBtn');
     const copyCodeBtn = document.getElementById('copyCodeBtn');
-    const changePhoneBtn = document.createElement('button');
-    changePhoneBtn.id = 'changePhoneBtn';
-    changePhoneBtn.textContent = '换号';
-    changePhoneBtn.disabled = status === 'code_received' || !status || status === 'unused';
+    let changePhoneBtn = document.getElementById('changePhoneBtn');
 
-    if (status === 'phone_assigned' && !document.getElementById('changePhoneBtn')) {
-        const phoneGroup = document.querySelector('.input-group:nth-child(1)');
-        phoneGroup.appendChild(changePhoneBtn);
-    } else if (status !== 'phone_assigned' && document.getElementById('changePhoneBtn')) {
-        document.getElementById('changePhoneBtn').remove();
+    if (!getPhoneBtn) {
+        console.error("getPhoneBtn not found");
+        return;
+    }
+
+    if (status === 'phone_assigned' && !changePhoneBtn) {
+        changePhoneBtn = document.createElement('button');
+        changePhoneBtn.id = 'changePhoneBtn';
+        changePhoneBtn.textContent = '换号';
+        changePhoneBtn.disabled = status === 'code_received';
+        document.querySelector('.input-group:nth-child(1)').appendChild(changePhoneBtn);
+    } else if (status !== 'phone_assigned' && changePhoneBtn) {
+        changePhoneBtn.remove();
     }
 
     getPhoneBtn.textContent = document.getElementById('phone').value ? '复制' : '取号';
@@ -49,6 +61,7 @@ function startPolling() {
         fetch(`/api/getCode?token=${token}`)
             .then(response => response.json())
             .then(data => {
+                console.log("GetCode response:", data); // 调试响应
                 if (data.error === "等待验证码中") {
                     document.getElementById('message').textContent = "等待验证码中...";
                     startPolling();
@@ -76,6 +89,7 @@ function startPolling() {
 }
 
 document.getElementById('getPhoneBtn').addEventListener('click', () => {
+    console.log("GetPhone button clicked"); // 调试点击事件
     const phone = document.getElementById('phone').value;
     if (phone) {
         navigator.clipboard.writeText(phone).then(() => {
@@ -85,6 +99,7 @@ document.getElementById('getPhoneBtn').addEventListener('click', () => {
         fetch(`/api/getPhone?token=${token}`)
             .then(response => response.json())
             .then(data => {
+                console.log("GetPhone response:", data); // 调试响应
                 if (data.error) {
                     document.getElementById('message').textContent = data.error;
                 } else {
@@ -120,4 +135,8 @@ document.addEventListener('click', (e) => {
     }
 });
 
-loadData();
+if (!token) {
+    document.getElementById('message').textContent = "缺少 token 参数";
+} else {
+    loadData();
+}
