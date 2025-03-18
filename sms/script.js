@@ -21,10 +21,10 @@ function loadData() {
 function updateButtons(status) {
     const getPhoneBtn = document.getElementById('getPhoneBtn');
     const copyCodeBtn = document.getElementById('copyCodeBtn');
-    let changePhoneBtn = document.getElementById('changePhoneBtn');
+    const inputGroup = document.querySelector('.input-group:nth-child(1)');
 
-    if (!getPhoneBtn) {
-        console.error("getPhoneBtn not found");
+    if (!getPhoneBtn || !inputGroup) {
+        console.error("getPhoneBtn or inputGroup not found");
         return;
     }
 
@@ -35,30 +35,31 @@ function updateButtons(status) {
     }
 
     getPhoneBtn.style.display = status === 'phone_assigned' ? 'none' : 'inline-block';
-    if (status === 'phone_assigned' && !changePhoneBtn) {
-        changePhoneBtn = document.createElement('button');
-        changePhoneBtn.id = 'changePhoneBtn';
-        changePhoneBtn.textContent = '换号';
-        document.querySelector('.input-group:nth-child(1)').appendChild(changePhoneBtn);
-        bindChangePhoneEvent();
-    } else if (status !== 'phone_assigned' && changePhoneBtn) {
-        changePhoneBtn.remove();
-    }
-
-    if (document.getElementById('phone').value) {
-        const copy1Btn = document.createElement('button');
-        copy1Btn.id = 'copy1Btn';
-        copy1Btn.textContent = '复制1';
-        if (!document.getElementById('copy1Btn')) {
-            document.querySelector('.input-group:nth-child(1)').appendChild(copy1Btn);
+    if (status === 'phone_assigned') {
+        let changePhoneBtn = document.getElementById('changePhoneBtn');
+        if (!changePhoneBtn) {
+            changePhoneBtn = document.createElement('button');
+            changePhoneBtn.id = 'changePhoneBtn';
+            changePhoneBtn.textContent = '换号';
+            inputGroup.appendChild(changePhoneBtn);
+            bindChangePhoneEvent();
         }
-        copy1Btn.addEventListener('click', () => {
-            navigator.clipboard.writeText(document.getElementById('phone').value).then(() => {
-                document.getElementById('message').textContent = "手机号已复制";
+        let copy1Btn = document.getElementById('copy1Btn');
+        if (!copy1Btn) {
+            copy1Btn = document.createElement('button');
+            copy1Btn.id = 'copy1Btn';
+            copy1Btn.textContent = '复制1';
+            inputGroup.appendChild(copy1Btn);
+            copy1Btn.addEventListener('click', () => {
+                navigator.clipboard.writeText(document.getElementById('phone').value).then(() => {
+                    document.getElementById('message').textContent = "手机号已复制";
+                });
             });
-        });
+        }
     } else {
+        const changePhoneBtn = document.getElementById('changePhoneBtn');
         const copy1Btn = document.getElementById('copy1Btn');
+        if (changePhoneBtn) changePhoneBtn.remove();
         if (copy1Btn) copy1Btn.remove();
     }
 
@@ -68,8 +69,9 @@ function updateButtons(status) {
 
     if (status === 'phone_assigned' && !timeoutId) {
         startPolling();
-    } else if (status === 'code_received' && changePhoneBtn) {
-        changePhoneBtn.remove();
+    } else if (status === 'code_received') {
+        const changePhoneBtn = document.getElementById('changePhoneBtn');
+        if (changePhoneBtn) changePhoneBtn.remove();
     }
 }
 
