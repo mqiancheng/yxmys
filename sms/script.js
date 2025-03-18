@@ -15,17 +15,26 @@ function loadData() {
         .then(data => {
             console.log("KeyInfo response:", data);
             if (data.error) {
-                document.getElementById('message').textContent = data.error;
+                if (data.error.includes("未获取到手机号")) {
+                    document.getElementById('message').textContent = "未获取到手机号请重试*2";
+                } else {
+                    document.getElementById('message').textContent = "网络错误，请重试";
+                }
             } else {
                 const tokenData = data.data;
                 document.getElementById('phone').value = tokenData.phone || '';
                 document.getElementById('code').value = tokenData.yzm || '';
+                if (tokenData.phone) {
+                    document.getElementById('message').textContent = "";
+                } else {
+                    document.getElementById('message').textContent = "获取到手机号请重试*1";
+                }
                 updateButtons(tokenData.status);
             }
         })
         .catch(error => {
             console.error("Load data error:", error);
-            document.getElementById('message').textContent = "加载失败，请重试";
+            document.getElementById('message').textContent = "网络错误，请重试";
         });
 }
 
@@ -39,18 +48,23 @@ function updateButtons(status) {
         return;
     }
 
+    if (document.getElementById('phone').value) {
+        status = 'phone_assigned'; // 强制设置状态
+    }
+
     if (status === 'phone_assigned' && !changePhoneBtn) {
         changePhoneBtn = document.createElement('button');
         changePhoneBtn.id = 'changePhoneBtn';
         changePhoneBtn.textContent = '换号';
         changePhoneBtn.disabled = status === 'code_received';
         document.querySelector('.input-group:nth-child(1)').appendChild(changePhoneBtn);
+        bindChangePhoneEvent(); // 绑定换号事件
     } else if (status !== 'phone_assigned' && changePhoneBtn) {
         changePhoneBtn.remove();
     }
 
     getPhoneBtn.textContent = document.getElementById('phone').value ? '复制' : '取号';
-    getPhoneBtn.disabled = status === 'code_received';
+    getPhoneBtn.disabled = !!document.getElementById('phone').value; // 有手机号时禁用“取号”
     copyCodeBtn.disabled = !document.getElementById('code').value || status !== 'code_received';
 
     if (status === 'phone_assigned' && !timeoutId) {
@@ -59,6 +73,7 @@ function updateButtons(status) {
 }
 
 function startPolling() {
+    console.log("Starting polling for code...");
     timeoutId = setTimeout(() => {
         fetch(`${baseUrl}/api/getCode?token=${token}`)
             .then(response => response.json())
@@ -103,14 +118,14 @@ document.getElementById('getPhoneBtn').addEventListener('click', () => {
             .then(data => {
                 console.log("GetPhone response:", data);
                 if (data.error) {
-                    document.getElementById('message').textContent = data.error;
+                    document.getElementById('message').textContent = data.error || "未知错误，请重试";
                 } else {
-                    loadData();
+                    loadData(); // 强制刷新数据
                 }
             })
             .catch(error => {
                 console.error("Get phone error:", error);
-                document.getElementById('message').textContent = "网络错误，请重试";
+                document.getElementById('message').textContent = `获取手机号失败: ${error.message}`;
             });
     }
 });
