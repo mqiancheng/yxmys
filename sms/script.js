@@ -16,6 +16,9 @@ function loadData() {
     document.getElementById('phone').value = cachedData.phone;
     document.getElementById('code').value = cachedData.sms || ''; // 显示 sms 内容
     updateButtons(cachedData.status);
+    if (!cachedData.phone && !cachedData.status) {
+        document.getElementById('message').textContent = ""; // 新页面不立即提示错误
+    }
 }
 
 function updateButtons(status) {
@@ -115,7 +118,12 @@ document.getElementById('getPhoneBtn').addEventListener('click', () => {
     document.getElementById('message').textContent = "";
     setTimeout(() => {
         fetch(`${baseUrl}/api/getPhone?token=${token}`)
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
                 console.log("GetPhone response:", data);
                 if (data.code === "0" && data.phone) {
@@ -123,7 +131,7 @@ document.getElementById('getPhoneBtn').addEventListener('click', () => {
                     cachedData.status = 'phone_assigned';
                     cachedData.timestamp = Date.now();
                     localStorage.setItem(`sms_${token}`, JSON.stringify(cachedData)); // 缓存1个月
-                    document.getElementById('message').textContent = data.msg;
+                    document.getElementById('message').textContent = data.msg || "成功";
                     loadData();
                 } else {
                     document.getElementById('message').textContent = `${data.msg || '未知错误'}，请重试`;
@@ -139,7 +147,7 @@ document.getElementById('getPhoneBtn').addEventListener('click', () => {
             })
             .catch(error => {
                 console.error("Get phone error:", error);
-                document.getElementById('message').textContent = `获取手机号失败: ${error.message}`;
+                document.getElementById('message').textContent = `网络错误: ${error.message}`;
             });
     }, 1000); // 1秒延迟
 });
