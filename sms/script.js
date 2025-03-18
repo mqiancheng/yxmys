@@ -19,7 +19,11 @@ function loadData() {
     if (phoneInput && codeInput) {
         phoneInput.value = cachedData.phone;
         codeInput.value = cachedData.sms || '';
-        updateButtons(cachedData.status);
+        try {
+            updateButtons(cachedData.status);
+        } catch (error) {
+            console.error("Error in updateButtons:", error);
+        }
     } else {
         console.error("phone or code input not found");
     }
@@ -31,7 +35,7 @@ function loadData() {
 function updateButtons(status) {
     const getPhoneBtn = document.getElementById('getPhoneBtn');
     const copyCodeBtn = document.getElementById('copyCodeBtn');
-    const inputGroup = document.querySelector('div:nth-child(2)'); // 调整为更简单的选择器
+    const inputGroup = document.querySelector('div:nth-child(2)'); // 匹配包含 phone 输入框的 <div>
 
     if (!getPhoneBtn || !inputGroup) {
         console.error("getPhoneBtn or inputGroup not found");
@@ -145,7 +149,7 @@ document.getElementById('getPhoneBtn').addEventListener('click', () => {
                     cachedData.timestamp = Date.now();
                     localStorage.setItem(`sms_${token}`, JSON.stringify(cachedData));
                     document.getElementById('message').textContent = data.msg || "成功";
-                    loadData();
+                    loadData(); // 强制刷新界面
                 } else {
                     document.getElementById('message').textContent = `${data.msg || '未获取到号码'}，请重试`;
                     setTimeout(() => {
