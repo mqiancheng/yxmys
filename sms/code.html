@@ -20,16 +20,25 @@
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
-        input, button {
+        .input-group {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+        input {
+            flex: 1;
             padding: 10px;
-            margin: 5px 0;
-            width: 100%;
-            box-sizing: border-box;
+            margin-right: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
         }
         button {
+            padding: 10px 15px;
+            margin: 0 5px;
             background-color: #007bff;
             color: white;
             border: none;
+            border-radius: 4px;
             cursor: pointer;
         }
         button:disabled {
@@ -52,18 +61,28 @@
             .footer {
                 font-size: 10px;
             }
+            .input-group {
+                flex-direction: column;
+            }
+            button {
+                width: 100%;
+                margin: 5px 0;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h2>接码服务</h2>
-        <p>手机号: <input type="text" id="phone" readonly></p>
-        <p>验证码: <input type="text" id="code" readonly></p>
-        <button id="getPhoneBtn">取号</button>
-        <button id="changePhoneBtn" disabled>换号</button>
-        <button id="copyBtn" disabled>复制</button>
-        <p id="message"></p>
+        <div class="input-group">
+            <input type="text" id="phone" placeholder="手机号" readonly>
+            <button id="getPhoneBtn">取号</button>
+        </div>
+        <div class="input-group">
+            <input type="text" id="code" placeholder="验证码" readonly>
+            <button id="copyCodeBtn" disabled>复制</button>
+        </div>
+        <div id="message"></div>
         <div class="footer">
             !!!点击【取号】即可获取手机号，然后用获取的号码输入您需要使用的界面并点击发送验证码，超过60秒未显示验证码请点击【换号】重新获取号码。<br>
             !!!取号后，在使用界面输入号码，并点击发送验证，跟您正常使用自己手机号一样，不点发送验证就没有码。<br>
