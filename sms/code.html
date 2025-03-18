@@ -20,67 +20,37 @@
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
-        input, textarea {
-            width: 100%;
-            margin-bottom: 10px;
+        input, button {
             padding: 10px;
+            margin: 5px 0;
+            width: 100%;
             box-sizing: border-box;
-            font-size: 16px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        textarea {
-            min-height: 100px;
-            resize: vertical;
-        }
-        .grid-container {
-            display: grid;
-            grid-template-columns: auto 1fr auto auto;
-            grid-gap: 10px;
-            align-items: center;
-        }
-        .grid-container1 {
-            margin-top: 20px;
-            height: 250px;
-            display: grid;
-            grid-template-columns: 53px 1fr auto;
-            grid-gap: 10px;
         }
         button {
-            padding: 10px 20px;
             background-color: #007bff;
             color: white;
             border: none;
-            border-radius: 4px;
             cursor: pointer;
         }
-        button:hover {
-            background-color: #0056b3;
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
         }
-        .status {
-            color: #666;
-            font-size: 14px;
+        #message {
+            color: red;
+            margin-top: 10px;
         }
         .footer {
             margin-top: 20px;
-            padding-top: 10px;
-            border-top: 1px solid #ddd;
-            text-align: center;
-            font-size: 14px;
+            font-size: 12px;
             color: #666;
         }
-        /* 手机端自适应 */
         @media (max-width: 600px) {
             .container {
                 padding: 10px;
-                margin: 0 10px;
             }
-            .grid-container, .grid-container1 {
-                grid-template-columns: auto 1fr auto;
-            }
-            button {
-                width: 100%;
-                margin-bottom: 10px;
+            .footer {
+                font-size: 10px;
             }
         }
     </style>
@@ -88,23 +58,25 @@
 <body>
     <div class="container">
         <h2>接码服务</h2>
-        <div class="grid-container">
-            <h4>手机号:</h4>
-            <input type="text" id="phone" value="" readonly>
-            <button id="getPhone">取号</button>
-            <button id="copyPhone" style="display: none;">复制</button>
-            <span id="phoneStatus" class="status"></span>
-        </div>
-        <div class="grid-container1">
-            <h4>短信:</h4>
-            <textarea id="code" readonly></textarea>
-            <button id="copyCode" style="display: none;">复制</button>
-            <span id="codeStatus" class="status"></span>
-        </div>
+        <p>手机号: <input type="text" id="phone" readonly></p>
+        <p>验证码: <input type="text" id="code" readonly></p>
+        <button id="getPhoneBtn">取号</button>
+        <button id="changePhoneBtn" disabled>换号</button>
+        <button id="copyBtn" disabled>复制</button>
+        <p id="message"></p>
         <div class="footer">
-            <p>欢迎使用我们的接码服务！如有问题，请联系客服。</p>
+            !!!点击【取号】即可获取手机号，然后用获取的号码输入您需要使用的界面并点击发送验证码，超过60秒未显示验证码请点击【换号】重新获取号码。<br>
+            !!!取号后，在使用界面输入号码，并点击发送验证，跟您正常使用自己手机号一样，不点发送验证就没有码。<br>
+            !!!收不到验证码请看这里：<br>
+            1、每次取号有效时间只有180秒，时间太久了直接点击换号就行，否则容易因失效而收不到验证码。<br>
+            2、您拍的宝贝是否对应您使用的软件名字，宝贝仅能接收宝贝名字的验证码哟。<br>
+            注意事项：<br>
+            1.若该号码提示失效、失败、错误，请重新刷新解绑/换绑界面后继续原手机号及原验证码输入，不需要重新发送验证！请一定要在短信提示时间内使用哟。<br>
+            2.所提供的均为虚拟号，不可接收第二次接码，若有特殊情况需要第二次接验证码，请在24小时内联系人工！<br>
+            3.若进行解绑操作请注意，同一个产品下的所有游戏均会一起被解绑，如：米哈游旗下的游戏同账号存在原神及崩坏，那么在解绑原神的同时崩坏上的资料也会一并被解绑！
         </div>
     </div>
-    <script src="./script.js"></script>
+
+    <script src="script.js"></script>
 </body>
 </html>
