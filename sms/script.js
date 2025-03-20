@@ -1,12 +1,26 @@
 let token = new URLSearchParams(window.location.search).get('token');
 let timeoutId;
+let countdownId; // 新增：用于存储 180 秒计时器的 ID
 let lastRequestTime = 0;
 
 let cachedData = { phone: '', sms: '', yzm: '', status: 'unused', used: false };
 
+function setMessage(text, type) {
+    const messageElement = document.getElementById('message');
+    messageElement.textContent = text;
+    messageElement.className = ''; // 清除现有类
+    if (type === 'error') {
+        messageElement.classList.add('message-error');
+    } else if (type === 'success') {
+        messageElement.classList.add('message-success');
+    } else {
+        messageElement.classList.add('message-info');
+    }
+}
+
 function loadData() {
     if (!token) {
-        document.getElementById('message').textContent = "卡密不存在";
+        setMessage("卡密不存在", 'error');
         document.getElementById('getPhoneBtn').disabled = true;
         return;
     }
@@ -15,7 +29,7 @@ function loadData() {
         .then(response => response.json())
         .then(data => {
             if (data.error === "卡密不存在") {
-                document.getElementById('message').textContent = "卡密不存在";
+                setMessage("卡密不存在", 'error');
                 document.getElementById('getPhoneBtn').disabled = true;
                 return;
             }
@@ -30,7 +44,7 @@ function loadData() {
             }
         })
         .catch(() => {
-            document.getElementById('message').textContent = "网络错误，请重试";
+            setMessage("网络错误，请重试", 'error');
             document.getElementById('getPhoneBtn').disabled = true;
         });
 }
@@ -49,41 +63,46 @@ function updateButtons(status, used) {
 }
 
 function startPolling() {
+    // 清除现有的计时器（轮询和 180 秒倒计时）
+    if (timeoutId) clearTimeout(timeoutId);
+    if (countdownId) clearTimeout(countdownId);
+
     timeoutId = setTimeout(() => {
         fetch(`/api/getCode?token=${token}`)
             .then(response => response.json())
             .then(data => {
                 if (data.error === "等待验证码中") {
-                    document.getElementById('message').textContent = "等待验证码中...";
+                    setMessage("等待验证码中...", 'info');
                     startPolling();
                 } else if (data.data && data.data.sms) {
                     cachedData = data.data;
                     loadData();
-                    document.getElementById('message').textContent = "验证码已接收";
+                    setMessage("验证码已接收", 'success');
                 }
             })
             .catch(() => {
-                document.getElementById('message').textContent = "网络错误，请重试";
+                setMessage("网络错误，请重试", 'error');
                 clearTimeout(timeoutId);
             });
-    }, 4000); // 轮询间隔调整为 4 秒
+    }, 4000); // 轮询间隔为 4 秒
 
-    setTimeout(() => {
+    // 启动新的 180 秒计时器
+    countdownId = setTimeout(() => {
         if (!cachedData.sms && timeoutId) {
-            document.getElementById('message').textContent = "180秒未收到验证码，请点击【换号】";
+            setMessage("180秒未收到验证码，请点击【换号】", 'error');
             clearTimeout(timeoutId);
             timeoutId = null;
         }
-    }, 180000); // 超时时间调整为 180 秒
+    }, 180000); // 超时时间为 180 秒
 }
 
 document.getElementById('getPhoneBtn').addEventListener('click', () => {
     const currentTime = Date.now();
     if (currentTime - lastRequestTime < 5000) {
-        document.getElementById('message').textContent = "请等待5秒后重试";
+        setMessage("请等待5秒后重试", 'error');
         return;
     }
-    document.getElementById('message').textContent = "";
+    setMessage("", 'info');
     setTimeout(() => {
         fetch(`/api/getPhone?token=${token}`)
             .then(response => response.json())
@@ -92,15 +111,15 @@ document.getElementById('getPhoneBtn').addEventListener('click', () => {
                     cachedData = data.data;
                     setTimeout(() => {
                         loadData();
-                        document.getElementById('message').textContent = data.msg;
-                        startPolling();
+                        setMessage(data.msg, 'success');
+                        startPolling(); // 取号成功后开始轮询，并重置计时
                     }, 1000);
                 } else {
                     setTimeout(() => {
-                        document.getElementById('message').textContent = data.msg;
+                        setMessage(data.msg, 'error');
                         setTimeout(() => {
                             if (!cachedData.phone) {
-                                document.getElementById('message').textContent = data.msg;
+                                setMessage(data.msg, 'error');
                             }
                         }, 1000);
                     }, 500);
@@ -108,7 +127,7 @@ document.getElementById('getPhoneBtn').addEventListener('click', () => {
                 lastRequestTime = currentTime;
             })
             .catch(error => {
-                document.getElementById('message').textContent = `网络错误: ${error.message}`;
+                setMessage(`网络错误: ${error.message}`, 'error');
                 lastRequestTime = currentTime;
             });
     }, 1000);
@@ -116,13 +135,13 @@ document.getElementById('getPhoneBtn').addEventListener('click', () => {
 
 document.getElementById('copyCodeBtn').addEventListener('click', () => {
     navigator.clipboard.writeText(cachedData.yzm || '').then(() => {
-        document.getElementById('message').textContent = "验证码已复制";
+        setMessage("验证码已复制", 'success');
     });
 });
 
 document.getElementById('copyPhoneBtn').addEventListener('click', () => {
     navigator.clipboard.writeText(cachedData.phone).then(() => {
-        document.getElementById('message').textContent = "手机号已复制";
+        setMessage("手机号已复制", 'success');
     });
 });
 
@@ -130,7 +149,7 @@ function bindChangePhoneEvent() {
     const changePhoneBtn = document.getElementById('changePhoneBtn');
     if (changePhoneBtn) {
         changePhoneBtn.addEventListener('click', () => {
-            document.getElementById('message').textContent = "换号中...";
+            setMessage("换号中...", 'info');
             fetch(`/api/cancelPhone?token=${token}`)
                 .then(response => response.json())
                 .then(data => {
@@ -144,22 +163,22 @@ function bindChangePhoneEvent() {
                                     if (data.data && data.data.phone) {
                                         cachedData = data.data;
                                         loadData();
-                                        document.getElementById('message').textContent = data.msg;
-                                        startPolling();
+                                        setMessage(data.msg, 'success');
+                                        startPolling(); // 换号后取号成功，开始轮询并重置计时
                                     } else {
-                                        document.getElementById('message').textContent = data.msg;
+                                        setMessage(data.msg, 'error');
                                     }
                                 })
                                 .catch(error => {
-                                    document.getElementById('message').textContent = `网络错误: ${error.message}`;
+                                    setMessage(`网络错误: ${error.message}`, 'error');
                                 });
                         }, 2000);
                     } else {
-                        document.getElementById('message').textContent = data.msg || "更换号码失败，请重试";
+                        setMessage(data.msg || "更换号码失败，请重试", 'error');
                     }
                 })
                 .catch(() => {
-                    document.getElementById('message').textContent = "更换号码失败，请重试";
+                    setMessage("更换号码失败，请重试", 'error');
                 });
         });
     }
