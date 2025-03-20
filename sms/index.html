@@ -5,24 +5,105 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>短信验证码服务</title>
     <style>
-        body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; }
-        input { padding: 8px; margin: 5px 0; }
-        button { padding: 8px 15px; margin: 5px; }
-        button:disabled { background: #ccc; cursor: not-allowed; }
-        #message { color: #666; margin: 10px 0; }
-        .phone-container { display: flex; align-items: center; justify-content: space-between; }
-        .phone-container input { width: 150px; margin-right: 10px; } /* 号码框更短 */
-        .phone-container .button-group { display: flex; align-items: center; }
-        .phone-container .button-group button { margin: 0 5px; }
-        #code { width: 80%; } /* 短信框更大 */
-        .tips { margin-top: 20px; font-size: 14px; color: #333; }
-        .tips h4 { margin: 10px 0 5px; }
-        .tips p { margin: 5px 0; }
-        .tips ul { margin: 5px 0; padding-left: 20px; }
+        body {
+            font-family: Arial, sans-serif;
+            padding: 15px;
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #f5f5f5;
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        input, button {
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            padding: 8px;
+            font-size: 14px;
+        }
+        input {
+            background-color: #fff;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        #message {
+            color: #666;
+            margin: 10px 0;
+            text-align: center;
+            font-size: 14px;
+        }
+        .phone-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .phone-container input {
+            width: 180px; /* 号码框加长 */
+            margin-right: 5px;
+        }
+        .phone-container .button-group {
+            display: flex;
+            align-items: center;
+        }
+        .phone-container .button-group button {
+            margin: 0 5px;
+        }
+        #code {
+            width: 100%; /* 短信框占满宽度 */
+            min-height: 60px; /* 短信框加高 */
+            resize: none; /* 禁止调整大小 */
+        }
+        .code-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .tips {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #555;
+            line-height: 1.5;
+        }
+        .tips h4 {
+            margin: 10px 0 5px;
+            font-size: 14px;
+            color: #333;
+        }
+        .tips p {
+            margin: 5px 0;
+        }
+        .tips ul {
+            margin: 5px 0;
+            padding-left: 20px;
+        }
         @media (max-width: 600px) {
-            .phone-container input { width: 120px; }
-            #code { width: 70%; }
-            button { padding: 6px 10px; }
+            .phone-container input {
+                width: 150px;
+            }
+            #code {
+                width: 100%;
+            }
+            button {
+                padding: 6px 10px;
+            }
         }
     </style>
 </head>
@@ -36,13 +117,13 @@
             <button id="changePhoneBtn" style="display: none;">换号</button>
         </div>
     </div>
-    <div>
+    <div class="code-container">
         <input type="text" id="code" placeholder="验证码" readonly>
         <button id="copyCodeBtn" disabled>复制2</button>
     </div>
     <div id="message"></div>
     <div class="tips">
-        <p>！！！点击【取号】即可获取手机号，然后用获取的号码输入您需要使用的界面并点击发送验证码，超过60秒未显示验证码请点击【换号】重新获取号码。</p>
+        <p>！！！点击【取号】即可获取手机号，然后用获取的号码输入您需要使用的界面并点击发送验证码，超过180秒未显示验证码请点击【换号】重新获取号码。</p>
         <p>！！！取号后，在使用界面输入号码，并点击发送验证，跟你正常使用自己手机号一样，不点发送验证就没有码。</p>
         <h4>！！！收不到验证码请看这里：</h4>
         <ul>
