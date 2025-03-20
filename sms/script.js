@@ -1,3 +1,7 @@
+// 从 URL 路径中提取 sid，例如 /94516 或 /21057
+const pathParts = window.location.pathname.split('/').filter(part => part);
+const sid = pathParts[0] || '94516'; // 如果路径中没有 sid，使用默认值 94516
+
 let token = new URLSearchParams(window.location.search).get('token');
 let timeoutId;
 let countdownId;
@@ -25,7 +29,7 @@ function loadData() {
         return;
     }
 
-    fetch(`/api/checkToken?token=${token}`)
+    fetch(`/api/checkToken?token=${token}`) // checkToken 不需要 sid
         .then(response => response.json())
         .then(data => {
             if (data.error === "卡密不存在") {
@@ -70,7 +74,7 @@ function startPolling() {
     if (countdownId) clearTimeout(countdownId);
 
     timeoutId = setTimeout(() => {
-        fetch(`/api/getCode?token=${token}`)
+        fetch(`/api/getCode?token=${token}&sid=${sid}`) // 修改：添加 sid 参数
             .then(response => response.json())
             .then(data => {
                 if (data.error === "等待验证码中") {
@@ -90,7 +94,7 @@ function startPolling() {
                 setMessage("网络错误，请重试", 'error');
                 clearTimeout(timeoutId);
             });
-    }, 5000); // 修改：轮询间隔调整为 5 秒
+    }, 5000); // 轮询间隔为 5 秒
 
     countdownId = setTimeout(() => {
         if (!cachedData.sms && timeoutId) {
@@ -109,7 +113,7 @@ document.getElementById('getPhoneBtn').addEventListener('click', () => {
     }
     setMessage("", 'info');
     setTimeout(() => {
-        fetch(`/api/getPhone?token=${token}`)
+        fetch(`/api/getPhone?token=${token}&sid=${sid}`) // 修改：添加 sid 参数
             .then(response => response.json())
             .then(data => {
                 if (data.data && data.data.phone) {
@@ -155,14 +159,14 @@ function bindChangePhoneEvent() {
     if (changePhoneBtn) {
         changePhoneBtn.addEventListener('click', () => {
             setMessage("换号中...", 'info');
-            fetch(`/api/cancelPhone?token=${token}`)
+            fetch(`/api/cancelPhone?token=${token}&sid=${sid}`) // 修改：添加 sid 参数
                 .then(response => response.json())
                 .then(data => {
                     if (data.data) {
                         cachedData = data.data;
                         loadData();
                         setTimeout(() => {
-                            fetch(`/api/getPhone?token=${token}`)
+                            fetch(`/api/getPhone?token=${token}&sid=${sid}`) // 修改：添加 sid 参数
                                 .then(response => response.json())
                                 .then(data => {
                                     if (data.data && data.data.phone) {
