@@ -1,133 +1,35 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>获取手机验证码</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 20px; text-align: center; }
-    .container { max-width: 600px; margin: 0 auto; }
-    .box { margin: 10px 0; }
-    input { padding: 5px; width: 200px; }
-    button { padding: 5px 10px; margin: 5px; }
-    button:disabled { background: #ccc; cursor: not-allowed; }
-    #msg { color: red; }
-    @media (max-width: 600px) { input { width: 100%; } }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>接码服务</title>
 </head>
 <body>
-  <div class="container">
-    <div class="box">
-      <input id="phone" readonly placeholder="点击取号获取号码">
-      <button id="getPhone">取号</button>
-      <button id="changePhone" disabled>换号</button>
-      <button id="copyPhone" style="display:none">复制1</button>
+    <div>
+        <h2>接码服务</h2>
+        <div>
+            <input type="text" id="phone" placeholder="手机号" readonly>
+            <button id="getPhoneBtn">取号</button>
+        </div>
+        <div>
+            <input type="text" id="code" placeholder="验证码" readonly>
+            <button id="copyCodeBtn" disabled>复制2</button>
+        </div>
+        <div id="message"></div>
+        <div>
+            !!!点击【取号】即可获取手机号，然后用获取的号码输入您需要使用的界面并点击发送验证码，超过60秒未显示验证码请点击【换号】重新获取号码。<br>
+            !!!取号后，在使用界面输入号码，并点击发送验证，跟您正常使用自己手机号一样，不点发送验证就没有码。<br>
+            !!!收不到验证码请看这里：<br>
+            1、每次取号有效时间只有180秒，时间太久了直接点击换号就行，否则容易因失效而收不到验证码。<br>
+            2、您拍的宝贝是否对应您使用的软件名字，宝贝仅能接收宝贝名字的验证码哟。<br>
+            注意事项：<br>
+            1.若该号码提示失效、失败、错误，请重新刷新解绑/换绑界面后继续原手机号及原验证码输入，不需要重新发送验证！请一定要在短信提示时间内使用哟。<br>
+            2.所提供的均为虚拟号，不可接收第二次接码，若有特殊情况需要第二次接验证码，请在24小时内联系人工！<br>
+            3.若进行解绑操作请注意，同一个产品下的所有游戏均会一起被解绑，如：米哈游旗下的游戏同账号存在原神及崩坏，那么在解绑原神的同时崩坏上的资料也会一并被解绑！
+        </div>
     </div>
-    <div class="box">
-      <input id="sms" readonly placeholder="短信内容">
-      <button id="copySms" style="display:none">复制2</button>
-    </div>
-    <div id="msg"></div>
-  </div>
 
-  <script>
-    const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get("token");
-    const apiBase = `${window.location.origin}`;
-
-    let phone = null;
-    let smsTimer = null;
-
-    document.getElementById("getPhone").onclick = async () => {
-      disableButtons();
-      await sleep(1000);
-      const res = await fetch(`${apiBase}/getPhone?token=${token}`);
-      const data = await res.json();
-      const msg = document.getElementById("msg");
-
-      if (data.code === 0) {
-        phone = data.phone;
-        document.getElementById("phone").value = phone;
-        document.getElementById("getPhone").style.display = "none";
-        document.getElementById("copyPhone").style.display = "inline";
-        document.getElementById("changePhone").disabled = false;
-        msg.textContent = "取号成功";
-        startSmsPolling();
-      } else {
-        msg.textContent = "未获取到手机号码，请重试";
-        await sleep(500);
-        msg.textContent = "";
-        enableGetPhoneButton();
-      }
-    };
-
-    document.getElementById("changePhone").onclick = async () => {
-      disableButtons();
-      await fetch(`${apiBase}/cancelAllRecv?token=${token}`);
-      clearInterval(smsTimer);
-      document.getElementById("phone").value = "";
-      document.getElementById("sms").value = "";
-      document.getElementById("msg").textContent = "";
-      document.getElementById("copyPhone").style.display = "none";
-      document.getElementById("copySms").style.display = "none";
-      document.getElementById("getPhone").style.display = "inline";
-      enableGetPhoneButton();
-    };
-
-    document.getElementById("copyPhone").onclick = () => navigator.clipboard.writeText(phone);
-    document.getElementById("copySms").onclick = () => navigator.clipboard.writeText(document.getElementById("sms").value);
-
-    function startSmsPolling() {
-      let timeElapsed = 0;
-      smsTimer = setInterval(async () => {
-        timeElapsed += 2;
-        const res = await fetch(`${apiBase}/getMessage?token=${token}`);
-        const data = await res.json();
-
-        if (data.code === 0) {
-          document.getElementById("sms").value = data.sms;
-          document.getElementById("copySms").style.display = "inline";
-          document.getElementById("changePhone").style.display = "none";
-          clearInterval(smsTimer);
-        } else if (timeElapsed >= 60) {
-          document.getElementById("msg").textContent = "60秒未收到验证码，请点击换号";
-          clearInterval(smsTimer);
-          document.getElementById("changePhone").disabled = false;
-        }
-      }, 2000);
-    }
-
-    function disableButtons() {
-      document.getElementById("getPhone").disabled = true;
-      document.getElementById("changePhone").disabled = true;
-    }
-
-    function enableGetPhoneButton() {
-      setTimeout(() => {
-        document.getElementById("getPhone").disabled = false;
-      }, 5000); // 5秒取号间隔
-    }
-
-    function sleep(ms) {
-      return new Promise(resolve => setTimeout(resolve, ms));
-    }
-
-    // 检查缓存中的号码和短信
-    (async () => {
-      const res = await fetch(`${apiBase}/getMessage?token=${token}`);
-      const data = await res.json();
-      if (data.phone) {
-        phone = data.phone;
-        document.getElementById("phone").value = phone;
-        document.getElementById("getPhone").style.display = "none";
-        document.getElementById("copyPhone").style.display = "inline";
-        document.getElementById("changePhone").style.display = "none";
-        if (data.sms) {
-          document.getElementById("sms").value = data.sms;
-          document.getElementById("copySms").style.display = "inline";
-        }
-      }
-    })();
-  </script>
+    <script src="script.js"></script>
 </body>
 </html>
