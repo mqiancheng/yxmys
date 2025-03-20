@@ -1,154 +1,199 @@
-<!DOCTYPE html>
-<html lang="zh">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>短信验证码服务</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 15px;
-            max-width: 600px;
-            margin: 0 auto;
-            background-color: #f5f5f5;
-        }
-        h2 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 20px;
-            font-size: 24px;
-        }
-        input, button, textarea {
-            border-radius: 5px;
-            border: 1px solid #ddd;
-            padding: 8px;
-            font-size: 14px;
-        }
-        input, textarea {
-            background-color: #fff;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-        button {
-            background-color: #007bff;
-            color: #fff;
-            border: none;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        button:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
-        }
-        #message {
-            margin: 10px 0;
-            text-align: center;
-            font-size: 14px;
-        }
-        .message-error {
-            color: #ff0000;
-        }
-        .message-success {
-            color: #28a745;
-        }
-        .message-info {
-            color: #666;
-        }
-        .phone-container {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 10px;
-        }
-        .phone-container input {
-            width: 180px;
-            margin-right: 5px;
-        }
-        .phone-container .button-group {
-            display: flex;
-            align-items: center;
-        }
-        .phone-container .button-group button {
-            margin: 0 5px;
-        }
-        #code {
-            width: 100%;
-            min-height: 80px; /* 修改：增加高度 */
-            resize: none;
-            white-space: pre-wrap; /* 修改：确保文字自动换行 */
-            word-wrap: break-word; /* 兼容性 */
-        }
-        .code-container {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 10px;
-        }
-        .tips {
-            margin-top: 20px;
-            font-size: 12px;
-            color: #555;
-            line-height: 1.5;
-        }
-        .tips h4 {
-            margin: 10px 0 5px;
-            font-size: 14px;
-            color: #333;
-        }
-        .tips p {
-            margin: 5px 0;
-        }
-        .tips ul {
-            margin: 5px 0;
-            padding-left: 20px;
-        }
-        @media (max-width: 600px) {
-            .phone-container input {
-                width: 150px;
+// 从查询参数中提取 sid
+const urlParams = new URLSearchParams(window.location.search);
+const sid = urlParams.get('sid') || '94516'; // 如果没有 sid 参数，使用默认值 94516
+
+let token = urlParams.get('token');
+let timeoutId;
+let countdownId;
+let lastRequestTime = 0;
+
+let cachedData = { phone: '', sms: '', yzm: '', status: 'unused', used: false };
+
+function setMessage(text, type) {
+    const messageElement = document.getElementById('message');
+    messageElement.textContent = text;
+    messageElement.className = '';
+    if (type === 'error') {
+        messageElement.classList.add('message-error');
+    } else if (type === 'success') {
+        messageElement.classList.add('message-success');
+    } else {
+        messageElement.classList.add('message-info');
+    }
+}
+
+function loadData() {
+    if (!token) {
+        setMessage("卡密不存在", 'error');
+        document.getElementById('getPhoneBtn').disabled = true;
+        return;
+    }
+
+    fetch(`/api/checkToken?token=${token}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error === "卡密不存在") {
+                setMessage("卡密不存在", 'error');
+                document.getElementById('getPhoneBtn').disabled = true;
+                return;
             }
-            #code {
-                width: 100%;
+            cachedData = data.data;
+            const phoneInput = document.getElementById('phone');
+            const codeInput = document.getElementById('code');
+            phoneInput.value = cachedData.phone || '';
+            codeInput.value = cachedData.sms || '';
+            updateButtons(cachedData.status, cachedData.used);
+            if (cachedData.status === 'phone_assigned' && !cachedData.used) {
+                startPolling();
+            } else if (cachedData.status === 'code_received' || cachedData.used) {
+                if (timeoutId) clearTimeout(timeoutId);
+                if (countdownId) clearTimeout(countdownId);
             }
-            button {
-                padding: 6px 10px;
-            }
+        })
+        .catch(() => {
+            setMessage("网络错误，请重试", 'error');
+            document.getElementById('getPhoneBtn').disabled = true;
+        });
+}
+
+function updateButtons(status, used) {
+    const getPhoneBtn = document.getElementById('getPhoneBtn');
+    const copyCodeBtn = document.getElementById('copyCodeBtn');
+    const changePhoneBtn = document.getElementById('changePhoneBtn');
+    const copyPhoneBtn = document.getElementById('copyPhoneBtn');
+
+    getPhoneBtn.style.display = (status === 'unused' && !used) ? 'inline-block' : 'none';
+    changePhoneBtn.style.display = (status === 'phone_assigned' && !used) ? 'inline-block' : 'none';
+    copyPhoneBtn.style.display = (status === 'phone_assigned' || status === 'code_received' || used) ? 'inline-block' : 'none';
+    copyCodeBtn.style.display = (status === 'code_received' || used) ? 'inline-block' : 'none';
+    copyCodeBtn.disabled = !cachedData.yzm;
+}
+
+function startPolling() {
+    if (timeoutId) clearTimeout(timeoutId);
+    if (countdownId) clearTimeout(countdownId);
+
+    timeoutId = setTimeout(() => {
+        fetch(`/api/getCode?token=${token}&sid=${sid}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error === "等待验证码中") {
+                    setMessage("等待验证码中...", 'info');
+                    startPolling();
+                } else if (data.data && data.data.sms) {
+                    cachedData = data.data;
+                    document.getElementById('code').value = data.data.sms || '';
+                    document.getElementById('phone').value = data.data.phone || '';
+                    updateButtons(data.data.status, data.data.used);
+                    setMessage("验证码已接收", 'success');
+                    if (timeoutId) clearTimeout(timeoutId);
+                    if (countdownId) clearTimeout(countdownId);
+                }
+            })
+            .catch(() => {
+                setMessage("网络错误，请重试", 'error');
+                clearTimeout(timeoutId);
+            });
+    }, 5000); // 轮询间隔为 5 秒
+
+    countdownId = setTimeout(() => {
+        if (!cachedData.sms && timeoutId) {
+            setMessage("180秒未收到验证码，请点击【换号】", 'error');
+            clearTimeout(timeoutId);
+            timeoutId = null;
         }
-    </style>
-</head>
-<body>
-    <h2>短信验证码服务</h2>
-    <div class="phone-container">
-        <input type="text" id="phone" placeholder="手机号" readonly>
-        <div class="button-group">
-            <button id="copyPhoneBtn" style="display: none;">复制1</button>
-            <button id="getPhoneBtn">取号</button>
-            <button id="changePhoneBtn" style="display: none;">换号</button>
-        </div>
-    </div>
-    <div class="code-container">
-        <!-- 修改：将 input 改为 textarea -->
-        <textarea id="code" placeholder="验证码" readonly></textarea>
-        <button id="copyCodeBtn" disabled>复制2</button>
-    </div>
-    <div id="message"></div>
-    <div class="tips">
-        <p>！！！点击【取号】即可获取手机号，取号成功后，请将获取的号码填写在需要绑定的游戏中，并送发送验证码。</p>
-        <p>！！！本系统等待接收验证码时长180秒，若未显示验证码，请点击【换号】重新获取号码。</p>
-        <p>！！！取号后，在使用界面输入号码，并点击发送验证，跟你正常使用自己手机号一样，不点发送验证系统就不会收到码。</p>
-        <h4>！！！收不到验证码请看这里：</h4>
-        <ul>
-            <li>1、每次取号有效时间只有180秒，时间太久了直接点击换号就行，否则容易因失效而收不到验证码。</li>
-            <li>2、您拍的宝贝是否对应您使用的软件名字，宝贝仅能接收宝贝名字的验证码哟。</li>
-        </ul>
-        <h4>注意事项：</h4>
-        <ul>
-            <li>1.若该号码提示失效、失败、错误，请重新刷新解绑/换绑界面后继续原手机号及原验证码输入，不需要重新发送验证！请一定要在短信提示时间内使用哟。</li>
-            <li>2.所提供的均为虚拟号，不可接收第二次接码！即使用本号码绑定的账号无法找回</li>
-            <li>3.若进行解绑操作请注意，同一个产品下的所有游戏均会一起被解绑，如：米哈游旗下的游戏同账号存在原神及崩坏，那么在解绑原神的同时崩坏上的资料也会一并被解绑！</li>
-        </ul>
-    </div>
-    <script src="/script.js"></script>
-</body>
-</html>
+    }, 180000);
+}
+
+document.getElementById('getPhoneBtn').addEventListener('click', () => {
+    const currentTime = Date.now();
+    if (currentTime - lastRequestTime < 5000) {
+        setMessage("请等待5秒后重试", 'error');
+        return;
+    }
+    setMessage("", 'info');
+    setTimeout(() => {
+        fetch(`/api/getPhone?token=${token}&sid=${sid}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.data && data.data.phone) {
+                    cachedData = data.data;
+                    setTimeout(() => {
+                        loadData();
+                        setMessage(data.msg, 'success');
+                        startPolling();
+                    }, 1000);
+                } else {
+                    setTimeout(() => {
+                        setMessage(data.msg, 'error');
+                        setTimeout(() => {
+                            if (!cachedData.phone) {
+                                setMessage(data.msg, 'error');
+                            }
+                        }, 1000);
+                    }, 500);
+                }
+                lastRequestTime = currentTime;
+            })
+            .catch(error => {
+                setMessage(`网络错误: ${error.message}`, 'error');
+                lastRequestTime = currentTime;
+            });
+    }, 1000);
+});
+
+document.getElementById('copyCodeBtn').addEventListener('click', () => {
+    navigator.clipboard.writeText(cachedData.yzm || '').then(() => {
+        setMessage("验证码已复制", 'success');
+    });
+});
+
+document.getElementById('copyPhoneBtn').addEventListener('click', () => {
+    navigator.clipboard.writeText(cachedData.phone).then(() => {
+        setMessage("手机号已复制", 'success');
+    });
+});
+
+function bindChangePhoneEvent() {
+    const changePhoneBtn = document.getElementById('changePhoneBtn');
+    if (changePhoneBtn) {
+        changePhoneBtn.addEventListener('click', () => {
+            setMessage("换号中...", 'info');
+            fetch(`/api/cancelPhone?token=${token}&sid=${sid}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.data) {
+                        cachedData = data.data;
+                        loadData();
+                        setTimeout(() => {
+                            fetch(`/api/getPhone?token=${token}&sid=${sid}`)
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.data && data.data.phone) {
+                                        cachedData = data.data;
+                                        loadData();
+                                        setMessage(data.msg, 'success');
+                                        startPolling();
+                                    } else {
+                                        setMessage(data.msg, 'error');
+                                    }
+                                })
+                                .catch(error => {
+                                    setMessage(`网络错误: ${error.message}`, 'error');
+                                });
+                        }, 2000);
+                    } else {
+                        setMessage(data.error || "更换号码失败，请重试", 'error');
+                    }
+                })
+                .catch(() => {
+                    setMessage("更换号码失败，请重试", 'error');
+                });
+        });
+    }
+}
+
+window.onload = () => {
+    loadData();
+    bindChangePhoneEvent();
+};
