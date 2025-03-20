@@ -1,6 +1,5 @@
 let token = new URLSearchParams(window.location.search).get('token');
 let timeoutId;
-const baseUrl = "https://sms-code.smsc.workers.dev"; // Worker URL
 let lastRequestTime = 0;
 
 let cachedData = { phone: '', sms: '', yzm: '', status: 'unused', used: false };
@@ -71,7 +70,7 @@ function updateButtons(status, used) {
 
 function startPolling() {
     timeoutId = setTimeout(() => {
-        fetch(`${baseUrl}/api/getCode?token=${token}`)
+        fetch(`/api/getCode?token=${token}`)
             .then(response => response.json())
             .then(data => {
                 if (data.error === "等待验证码中") {
@@ -106,7 +105,7 @@ document.getElementById('getPhoneBtn').addEventListener('click', () => {
     }
     document.getElementById('message').textContent = "";
     setTimeout(() => {
-        fetch(`${baseUrl}/api/getPhone?token=${token}`)
+        fetch(`/api/getPhone?token=${token}`)
             .then(response => response.json())
             .then(data => {
                 if (data.data && data.data.phone) {
@@ -145,7 +144,7 @@ function bindChangePhoneEvent() {
     const changePhoneBtn = document.getElementById('changePhoneBtn');
     if (changePhoneBtn) {
         changePhoneBtn.addEventListener('click', () => {
-            fetch(`${baseUrl}/api/cancelPhone?token=${token}`)
+            fetch(`/api/cancelPhone?token=${token}`)
                 .then(response => response.json())
                 .then(data => {
                     cachedData = data.data;
