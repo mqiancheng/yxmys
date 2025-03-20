@@ -1,6 +1,7 @@
 // 从查询参数中提取 sid
 const urlParams = new URLSearchParams(window.location.search);
 const sid = urlParams.get('sid') || '94516'; // 如果没有 sid 参数，使用默认值 94516
+console.log(`[DEBUG] Frontend sid: ${sid}`); // 添加调试日志
 
 let token = urlParams.get('token');
 let timeoutId;
@@ -74,6 +75,7 @@ function startPolling() {
     if (countdownId) clearTimeout(countdownId);
 
     timeoutId = setTimeout(() => {
+        console.log(`[DEBUG] Polling getCode with sid: ${sid}`); // 添加调试日志
         fetch(`/api/getCode?token=${token}&sid=${sid}`)
             .then(response => response.json())
             .then(data => {
@@ -113,6 +115,7 @@ document.getElementById('getPhoneBtn').addEventListener('click', () => {
     }
     setMessage("", 'info');
     setTimeout(() => {
+        console.log(`[DEBUG] Fetching getPhone with sid: ${sid}`); // 添加调试日志
         fetch(`/api/getPhone?token=${token}&sid=${sid}`)
             .then(response => response.json())
             .then(data => {
@@ -159,6 +162,7 @@ function bindChangePhoneEvent() {
     if (changePhoneBtn) {
         changePhoneBtn.addEventListener('click', () => {
             setMessage("换号中...", 'info');
+            console.log(`[DEBUG] Fetching cancelPhone with sid: ${sid}`); // 添加调试日志
             fetch(`/api/cancelPhone?token=${token}&sid=${sid}`)
                 .then(response => response.json())
                 .then(data => {
@@ -166,6 +170,7 @@ function bindChangePhoneEvent() {
                         cachedData = data.data;
                         loadData();
                         setTimeout(() => {
+                            console.log(`[DEBUG] Fetching getPhone after cancel with sid: ${sid}`); // 添加调试日志
                             fetch(`/api/getPhone?token=${token}&sid=${sid}`)
                                 .then(response => response.json())
                                 .then(data => {
