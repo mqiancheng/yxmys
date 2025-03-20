@@ -66,15 +66,15 @@ function startPolling() {
                 document.getElementById('message').textContent = "网络错误，请重试";
                 clearTimeout(timeoutId);
             });
-    }, 2000);
+    }, 4000); // 轮询间隔调整为 4 秒
 
     setTimeout(() => {
         if (!cachedData.sms && timeoutId) {
-            document.getElementById('message').textContent = "60秒未收到验证码，请点击【换号】";
+            document.getElementById('message').textContent = "180秒未收到验证码，请点击【换号】";
             clearTimeout(timeoutId);
             timeoutId = null;
         }
-    }, 60000);
+    }, 180000); // 超时时间调整为 180 秒
 }
 
 document.getElementById('getPhoneBtn').addEventListener('click', () => {
@@ -137,7 +137,6 @@ function bindChangePhoneEvent() {
                     if (data.data) {
                         cachedData = data.data;
                         loadData();
-                        // 等待 2 秒后自动调用取号 API
                         setTimeout(() => {
                             fetch(`/api/getPhone?token=${token}`)
                                 .then(response => response.json())
