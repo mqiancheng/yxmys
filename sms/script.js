@@ -1,6 +1,6 @@
 let token = new URLSearchParams(window.location.search).get('token');
 let timeoutId;
-let countdownId; // 新增：用于存储 180 秒计时器的 ID
+let countdownId;
 let lastRequestTime = 0;
 
 let cachedData = { phone: '', sms: '', yzm: '', status: 'unused', used: false };
@@ -8,7 +8,7 @@ let cachedData = { phone: '', sms: '', yzm: '', status: 'unused', used: false };
 function setMessage(text, type) {
     const messageElement = document.getElementById('message');
     messageElement.textContent = text;
-    messageElement.className = ''; // 清除现有类
+    messageElement.className = '';
     if (type === 'error') {
         messageElement.classList.add('message-error');
     } else if (type === 'success') {
@@ -36,11 +36,14 @@ function loadData() {
             cachedData = data.data;
             const phoneInput = document.getElementById('phone');
             const codeInput = document.getElementById('code');
-            phoneInput.value = cachedData.phone;
+            phoneInput.value = cachedData.phone || '';
             codeInput.value = cachedData.sms || '';
             updateButtons(cachedData.status, cachedData.used);
             if (cachedData.status === 'phone_assigned' && !cachedData.used) {
                 startPolling();
+            } else if (cachedData.status === 'code_received' || cachedData.used) {
+                if (timeoutId) clearTimeout(timeoutId);
+                if (countdownId) clearTimeout(countdownId);
             }
         })
         .catch(() => {
@@ -63,7 +66,6 @@ function updateButtons(status, used) {
 }
 
 function startPolling() {
-    // 清除现有的计时器（轮询和 180 秒倒计时）
     if (timeoutId) clearTimeout(timeoutId);
     if (countdownId) clearTimeout(countdownId);
 
@@ -76,24 +78,27 @@ function startPolling() {
                     startPolling();
                 } else if (data.data && data.data.sms) {
                     cachedData = data.data;
-                    loadData();
+                    document.getElementById('code').value = data.data.sms || '';
+                    document.getElementById('phone').value = data.data.phone || '';
+                    updateButtons(data.data.status, data.data.used);
                     setMessage("验证码已接收", 'success');
+                    if (timeoutId) clearTimeout(timeoutId);
+                    if (countdownId) clearTimeout(countdownId);
                 }
             })
             .catch(() => {
                 setMessage("网络错误，请重试", 'error');
                 clearTimeout(timeoutId);
             });
-    }, 4000); // 轮询间隔为 4 秒
+    }, 5000); // 修改：轮询间隔调整为 5 秒
 
-    // 启动新的 180 秒计时器
     countdownId = setTimeout(() => {
         if (!cachedData.sms && timeoutId) {
             setMessage("180秒未收到验证码，请点击【换号】", 'error');
             clearTimeout(timeoutId);
             timeoutId = null;
         }
-    }, 180000); // 超时时间为 180 秒
+    }, 180000);
 }
 
 document.getElementById('getPhoneBtn').addEventListener('click', () => {
@@ -112,7 +117,7 @@ document.getElementById('getPhoneBtn').addEventListener('click', () => {
                     setTimeout(() => {
                         loadData();
                         setMessage(data.msg, 'success');
-                        startPolling(); // 取号成功后开始轮询，并重置计时
+                        startPolling();
                     }, 1000);
                 } else {
                     setTimeout(() => {
@@ -164,7 +169,7 @@ function bindChangePhoneEvent() {
                                         cachedData = data.data;
                                         loadData();
                                         setMessage(data.msg, 'success');
-                                        startPolling(); // 换号后取号成功，开始轮询并重置计时
+                                        startPolling();
                                     } else {
                                         setMessage(data.msg, 'error');
                                     }
@@ -174,7 +179,7 @@ function bindChangePhoneEvent() {
                                 });
                         }, 2000);
                     } else {
-                        setMessage(data.msg || "更换号码失败，请重试", 'error');
+                        setMessage(data.error || "更换号码失败，请重试", 'error');
                     }
                 })
                 .catch(() => {
