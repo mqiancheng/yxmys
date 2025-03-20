@@ -1,8 +1,8 @@
-// 从 URL 路径中提取 sid，例如 /94516 或 /21057
-const pathParts = window.location.pathname.split('/').filter(part => part);
-const sid = pathParts[0] || '94516'; // 如果路径中没有 sid，使用默认值 94516
+// 从查询参数中提取 sid
+const urlParams = new URLSearchParams(window.location.search);
+const sid = urlParams.get('sid') || '94516'; // 如果没有 sid 参数，使用默认值 94516
 
-let token = new URLSearchParams(window.location.search).get('token');
+let token = urlParams.get('token');
 let timeoutId;
 let countdownId;
 let lastRequestTime = 0;
