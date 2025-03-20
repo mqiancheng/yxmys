@@ -43,10 +43,18 @@
             cursor: not-allowed;
         }
         #message {
-            color: #666;
             margin: 10px 0;
             text-align: center;
             font-size: 14px;
+        }
+        .message-error {
+            color: #ff0000; /* 红色用于错误提示 */
+        }
+        .message-success {
+            color: #28a745; /* 绿色用于成功提示 */
+        }
+        .message-info {
+            color: #666; /* 灰色用于普通提示 */
         }
         .phone-container {
             display: flex;
@@ -55,7 +63,7 @@
             margin-bottom: 10px;
         }
         .phone-container input {
-            width: 180px; /* 号码框加长 */
+            width: 180px;
             margin-right: 5px;
         }
         .phone-container .button-group {
@@ -66,9 +74,9 @@
             margin: 0 5px;
         }
         #code {
-            width: 100%; /* 短信框占满宽度 */
-            min-height: 60px; /* 短信框加高 */
-            resize: none; /* 禁止调整大小 */
+            width: 100%;
+            min-height: 60px;
+            resize: none;
         }
         .code-container {
             display: flex;
