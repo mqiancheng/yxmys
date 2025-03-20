@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>短信验证码服务</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; }
+        input { padding: 8px; margin: 5px 0; width: 60%; }
+        button { padding: 8px 15px; margin: 5px; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        #message { color: #666; margin: 10px 0; }
+        @media (max-width: 600px) { input { width: 50%; } button { padding: 6px 10px; } }
+    </style>
+</head>
+<body>
+    <h2>短信验证码服务</h2>
+    <div>
+        <input type="text" id="phone" placeholder="手机号" readonly>
+        <button id="getPhoneBtn">取号</button>
+    </div>
+    <div>
+        <input type="text" id="code" placeholder="验证码" readonly>
+        <button id="copyCodeBtn" disabled>复制2</button>
+    </div>
+    <div id="message"></div>
+    <script src="/script.js"></script>
+</body>
+</html>
