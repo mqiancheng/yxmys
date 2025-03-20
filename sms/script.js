@@ -1,7 +1,8 @@
-// 从查询参数中提取 sid
+// 从查询参数或路径中提取 sid
 const urlParams = new URLSearchParams(window.location.search);
-const sid = urlParams.get('sid') || '94516'; // 如果没有 sid 参数，使用默认值 94516
-console.log(`[DEBUG] Frontend sid: ${sid}`); // 添加调试日志
+const pathSid = window.location.pathname.split('/')[1]; // 从路径中提取 sid
+const sid = urlParams.get('sid') || pathSid || '94516'; // 优先使用查询参数，其次使用路径，最后使用默认值
+console.log(`[DEBUG] Frontend sid (from query or path): ${sid}`); // 添加调试日志
 
 let token = urlParams.get('token');
 let timeoutId;
