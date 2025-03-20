@@ -10,14 +10,22 @@
         button { padding: 8px 15px; margin: 5px; }
         button:disabled { background: #ccc; cursor: not-allowed; }
         #message { color: #666; margin: 10px 0; }
+        .phone-container { display: flex; align-items: center; justify-content: space-between; }
+        .phone-container input { flex: 1; margin-right: 10px; }
+        .phone-container .button-group { display: flex; align-items: center; }
+        .phone-container .button-group button { margin: 0 5px; }
         @media (max-width: 600px) { input { width: 50%; } button { padding: 6px 10px; } }
     </style>
 </head>
 <body>
     <h2>短信验证码服务</h2>
-    <div>
+    <div class="phone-container">
         <input type="text" id="phone" placeholder="手机号" readonly>
-        <button id="getPhoneBtn">取号</button>
+        <div class="button-group">
+            <button id="copyPhoneBtn" style="display: none;">复制1</button>
+            <button id="getPhoneBtn">取号</button>
+            <button id="changePhoneBtn" style="display: none;">换号</button>
+        </div>
     </div>
     <div>
         <input type="text" id="code" placeholder="验证码" readonly>
