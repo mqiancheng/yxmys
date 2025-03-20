@@ -31,7 +31,7 @@ function loadData() {
 function updateButtons(status) {
     const getPhoneBtn = document.getElementById('getPhoneBtn');
     const copyCodeBtn = document.getElementById('copyCodeBtn');
-    const inputGroup = document.querySelector('.input-group:nth-child(1)');
+    const inputGroup = document.querySelector('div:nth-child(2)'); // 调整为更简单的选择器
 
     if (!getPhoneBtn || !inputGroup) {
         console.error("getPhoneBtn or inputGroup not found");
@@ -126,7 +126,7 @@ function startPolling() {
 document.getElementById('getPhoneBtn').addEventListener('click', () => {
     console.log("GetPhone button clicked");
     const currentTime = Date.now();
-    if (currentTime - lastRequestTime < 6000) { // 6秒限制
+    if (currentTime - lastRequestTime < 6000) {
         document.getElementById('message').textContent = "请等待6秒后重试";
         return;
     }
@@ -147,24 +147,24 @@ document.getElementById('getPhoneBtn').addEventListener('click', () => {
                     document.getElementById('message').textContent = data.msg || "成功";
                     loadData();
                 } else {
-                    document.getElementById('message').textContent = `${data.msg || '未知错误'}，请重试`;
+                    document.getElementById('message').textContent = `${data.msg || '未获取到号码'}，请重试`;
                     setTimeout(() => {
                         document.getElementById('message').textContent = "";
                         setTimeout(() => {
                             if (!document.getElementById('phone').value) {
-                                document.getElementById('message').textContent = `${data.msg || '未知错误'}，请重试`;
+                                document.getElementById('message').textContent = `${data.msg || '未获取到号码'}，请重试`;
                             }
                         }, 500);
                     }, 500);
                 }
-                lastRequestTime = currentTime; // 更新最后请求时间
+                lastRequestTime = currentTime;
             })
             .catch(error => {
                 console.error("Get phone error:", error);
                 document.getElementById('message').textContent = `网络错误: ${error.message}`;
-                lastRequestTime = currentTime; // 更新时间，即使失败也计时
+                lastRequestTime = currentTime;
             });
-    }, 1000); // 1秒延迟
+    }, 1000);
 });
 
 document.getElementById('copyCodeBtn').addEventListener('click', () => {
@@ -200,12 +200,10 @@ function bindChangePhoneEvent() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    requestAnimationFrame(() => {
-        bindChangePhoneEvent();
-        loadData();
-    });
-});
+window.onload = () => {
+    bindChangePhoneEvent();
+    loadData();
+};
 
 function rebindChangePhoneEvent() {
     const changePhoneBtn = document.getElementById('changePhoneBtn');
