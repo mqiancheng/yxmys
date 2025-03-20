@@ -6,14 +6,30 @@ let cachedData = { phone: '', sms: '', yzm: '', status: 'unused', used: false };
 
 function loadData() {
     if (!token) {
-        document.getElementById('message').textContent = "缺少 token 参数";
+        document.getElementById('message').textContent = "卡密不存在";
+        document.getElementById('getPhoneBtn').disabled = true;
         return;
     }
-    const phoneInput = document.getElementById('phone');
-    const codeInput = document.getElementById('code');
-    phoneInput.value = cachedData.phone;
-    codeInput.value = cachedData.sms || '';
-    updateButtons(cachedData.status, cachedData.used);
+
+    fetch(`/api/getPhone?token=${token}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error === "卡密不存在") {
+                document.getElementById('message').textContent = "卡密不存在";
+                document.getElementById('getPhoneBtn').disabled = true;
+                return;
+            }
+            cachedData = data.data;
+            const phoneInput = document.getElementById('phone');
+            const codeInput = document.getElementById('code');
+            phoneInput.value = cachedData.phone;
+            codeInput.value = cachedData.sms || '';
+            updateButtons(cachedData.status, cachedData.used);
+        })
+        .catch(() => {
+            document.getElementById('message').textContent = "网络错误，请重试";
+            document.getElementById('getPhoneBtn').disabled = true;
+        });
 }
 
 function updateButtons(status, used) {
