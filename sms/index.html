@@ -6,15 +6,24 @@
     <title>短信验证码服务</title>
     <style>
         body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; }
-        input { padding: 8px; margin: 5px 0; width: 60%; }
+        input { padding: 8px; margin: 5px 0; }
         button { padding: 8px 15px; margin: 5px; }
         button:disabled { background: #ccc; cursor: not-allowed; }
         #message { color: #666; margin: 10px 0; }
         .phone-container { display: flex; align-items: center; justify-content: space-between; }
-        .phone-container input { flex: 1; margin-right: 10px; }
+        .phone-container input { width: 150px; margin-right: 10px; } /* 号码框更短 */
         .phone-container .button-group { display: flex; align-items: center; }
         .phone-container .button-group button { margin: 0 5px; }
-        @media (max-width: 600px) { input { width: 50%; } button { padding: 6px 10px; } }
+        #code { width: 80%; } /* 短信框更大 */
+        .tips { margin-top: 20px; font-size: 14px; color: #333; }
+        .tips h4 { margin: 10px 0 5px; }
+        .tips p { margin: 5px 0; }
+        .tips ul { margin: 5px 0; padding-left: 20px; }
+        @media (max-width: 600px) {
+            .phone-container input { width: 120px; }
+            #code { width: 70%; }
+            button { padding: 6px 10px; }
+        }
     </style>
 </head>
 <body>
@@ -32,6 +41,21 @@
         <button id="copyCodeBtn" disabled>复制2</button>
     </div>
     <div id="message"></div>
+    <div class="tips">
+        <p>！！！点击【取号】即可获取手机号，然后用获取的号码输入您需要使用的界面并点击发送验证码，超过60秒未显示验证码请点击【换号】重新获取号码。</p>
+        <p>！！！取号后，在使用界面输入号码，并点击发送验证，跟你正常使用自己手机号一样，不点发送验证就没有码。</p>
+        <h4>！！！收不到验证码请看这里：</h4>
+        <ul>
+            <li>1、每次取号有效时间只有180秒，时间太久了直接点击换号就行，否则容易因失效而收不到验证码。</li>
+            <li>2、您拍的宝贝是否对应您使用的软件名字，宝贝仅能接收宝贝名字的验证码哟。</li>
+        </ul>
+        <h4>注意事项：</h4>
+        <ul>
+            <li>1.若该号码提示失效、失败、错误，请重新刷新解绑/换绑界面后继续原手机号及原验证码输入，不需要重新发送验证！请一定要在短信提示时间内使用哟。</li>
+            <li>2.所提供的均为虚拟号，不可接收第二次接码，若有特殊情况需要第二次接验证码，请在24小时内联系人工！</li>
+            <li>3.若进行解绑操作请注意，同一个产品下的所有游戏均会一起被解绑，如：米哈游旗下的游戏同账号存在原神及崩坏，那么在解绑原神的同时崩坏上的资料也会一并被解绑！</li>
+        </ul>
+    </div>
     <script src="/script.js"></script>
 </body>
 </html>
