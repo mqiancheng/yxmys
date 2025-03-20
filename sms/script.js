@@ -11,7 +11,8 @@ function loadData() {
         return;
     }
 
-    fetch(`/api/getPhone?token=${token}`)
+    // 使用 /api/checkToken 检查 token 状态，不触发取号
+    fetch(`/api/checkToken?token=${token}`)
         .then(response => response.json())
         .then(data => {
             if (data.error === "卡密不存在") {
@@ -25,6 +26,10 @@ function loadData() {
             phoneInput.value = cachedData.phone;
             codeInput.value = cachedData.sms || '';
             updateButtons(cachedData.status, cachedData.used);
+            // 如果已经取号但未接收验证码，自动开始轮询
+            if (cachedData.status === 'phone_assigned' && !cachedData.used) {
+                startPolling();
+            }
         })
         .catch(() => {
             document.getElementById('message').textContent = "网络错误，请重试";
@@ -35,51 +40,12 @@ function loadData() {
 function updateButtons(status, used) {
     const getPhoneBtn = document.getElementById('getPhoneBtn');
     const copyCodeBtn = document.getElementById('copyCodeBtn');
-    const phoneDiv = document.querySelector('div:first-of-type');
-
-    let changePhoneBtn = document.getElementById('changePhoneBtn');
-    let copyPhoneBtn = document.getElementById('copyPhoneBtn');
+    const changePhoneBtn = document.getElementById('changePhoneBtn');
+    const copyPhoneBtn = document.getElementById('copyPhoneBtn');
 
     getPhoneBtn.style.display = (status === 'unused' && !used) ? 'inline-block' : 'none';
-
-    if (status === 'phone_assigned' && !used) {
-        if (!changePhoneBtn) {
-            changePhoneBtn = document.createElement('button');
-            changePhoneBtn.id = 'changePhoneBtn';
-            changePhoneBtn.textContent = '换号';
-            phoneDiv.appendChild(changePhoneBtn);
-            bindChangePhoneEvent();
-        }
-        if (!copyPhoneBtn) {
-            copyPhoneBtn = document.createElement('button');
-            copyPhoneBtn.id = 'copyPhoneBtn';
-            copyPhoneBtn.textContent = '复制1';
-            phoneDiv.appendChild(copyPhoneBtn);
-            copyPhoneBtn.addEventListener('click', () => {
-                navigator.clipboard.writeText(cachedData.phone).then(() => {
-                    document.getElementById('message').textContent = "手机号已复制";
-                });
-            });
-        }
-    } else {
-        if (changePhoneBtn) changePhoneBtn.remove();
-        if (status === 'code_received' || used) {
-            if (!copyPhoneBtn) {
-                copyPhoneBtn = document.createElement('button');
-                copyPhoneBtn.id = 'copyPhoneBtn';
-                copyPhoneBtn.textContent = '复制1';
-                phoneDiv.appendChild(copyPhoneBtn);
-                copyPhoneBtn.addEventListener('click', () => {
-                    navigator.clipboard.writeText(cachedData.phone).then(() => {
-                        document.getElementById('message').textContent = "手机号已复制";
-                    });
-                });
-            }
-        } else if (copyPhoneBtn) {
-            copyPhoneBtn.remove();
-        }
-    }
-
+    changePhoneBtn.style.display = (status === 'phone_assigned' && !used) ? 'inline-block' : 'none';
+    copyPhoneBtn.style.display = (status === 'phone_assigned' || status === 'code_received' || used) ? 'inline-block' : 'none';
     copyCodeBtn.style.display = (status === 'code_received' || used) ? 'inline-block' : 'none';
     copyCodeBtn.disabled = !cachedData.yzm;
 }
@@ -129,7 +95,7 @@ document.getElementById('getPhoneBtn').addEventListener('click', () => {
                     setTimeout(() => {
                         loadData();
                         document.getElementById('message').textContent = data.msg;
-                        startPolling();
+                        startPolling(); // 取号成功后开始轮询
                     }, 1000);
                 } else {
                     setTimeout(() => {
@@ -156,6 +122,12 @@ document.getElementById('copyCodeBtn').addEventListener('click', () => {
     });
 });
 
+document.getElementById('copyPhoneBtn').addEventListener('click', () => {
+    navigator.clipboard.writeText(cachedData.phone).then(() => {
+        document.getElementById('message').textContent = "手机号已复制";
+    });
+});
+
 function bindChangePhoneEvent() {
     const changePhoneBtn = document.getElementById('changePhoneBtn');
     if (changePhoneBtn) {
@@ -174,4 +146,7 @@ function bindChangePhoneEvent() {
     }
 }
 
-window.onload = loadData;
+window.onload = () => {
+    loadData();
+    bindChangePhoneEvent();
+};
