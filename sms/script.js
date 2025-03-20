@@ -11,7 +11,6 @@ function loadData() {
         return;
     }
 
-    // 使用 /api/checkToken 检查 token 状态，不触发取号
     fetch(`/api/checkToken?token=${token}`)
         .then(response => response.json())
         .then(data => {
@@ -26,7 +25,6 @@ function loadData() {
             phoneInput.value = cachedData.phone;
             codeInput.value = cachedData.sms || '';
             updateButtons(cachedData.status, cachedData.used);
-            // 如果已经取号但未接收验证码，自动开始轮询
             if (cachedData.status === 'phone_assigned' && !cachedData.used) {
                 startPolling();
             }
@@ -95,7 +93,7 @@ document.getElementById('getPhoneBtn').addEventListener('click', () => {
                     setTimeout(() => {
                         loadData();
                         document.getElementById('message').textContent = data.msg;
-                        startPolling(); // 取号成功后开始轮询
+                        startPolling();
                     }, 1000);
                 } else {
                     setTimeout(() => {
@@ -132,12 +130,34 @@ function bindChangePhoneEvent() {
     const changePhoneBtn = document.getElementById('changePhoneBtn');
     if (changePhoneBtn) {
         changePhoneBtn.addEventListener('click', () => {
+            document.getElementById('message').textContent = "换号中...";
             fetch(`/api/cancelPhone?token=${token}`)
                 .then(response => response.json())
                 .then(data => {
-                    cachedData = data.data;
-                    loadData();
-                    document.getElementById('message').textContent = data.msg;
+                    if (data.data) {
+                        cachedData = data.data;
+                        loadData();
+                        // 等待 2 秒后自动调用取号 API
+                        setTimeout(() => {
+                            fetch(`/api/getPhone?token=${token}`)
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.data && data.data.phone) {
+                                        cachedData = data.data;
+                                        loadData();
+                                        document.getElementById('message').textContent = data.msg;
+                                        startPolling();
+                                    } else {
+                                        document.getElementById('message').textContent = data.msg;
+                                    }
+                                })
+                                .catch(error => {
+                                    document.getElementById('message').textContent = `网络错误: ${error.message}`;
+                                });
+                        }, 2000);
+                    } else {
+                        document.getElementById('message').textContent = data.msg || "更换号码失败，请重试";
+                    }
                 })
                 .catch(() => {
                     document.getElementById('message').textContent = "更换号码失败，请重试";
