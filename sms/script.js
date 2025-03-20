@@ -29,7 +29,7 @@ function loadData() {
         return;
     }
 
-    fetch(`/api/checkToken?token=${token}`) // checkToken 不需要 sid
+    fetch(`/api/checkToken?token=${token}`)
         .then(response => response.json())
         .then(data => {
             if (data.error === "卡密不存在") {
@@ -74,7 +74,7 @@ function startPolling() {
     if (countdownId) clearTimeout(countdownId);
 
     timeoutId = setTimeout(() => {
-        fetch(`/api/getCode?token=${token}&sid=${sid}`) // 修改：添加 sid 参数
+        fetch(`/api/getCode?token=${token}&sid=${sid}`)
             .then(response => response.json())
             .then(data => {
                 if (data.error === "等待验证码中") {
@@ -113,7 +113,7 @@ document.getElementById('getPhoneBtn').addEventListener('click', () => {
     }
     setMessage("", 'info');
     setTimeout(() => {
-        fetch(`/api/getPhone?token=${token}&sid=${sid}`) // 修改：添加 sid 参数
+        fetch(`/api/getPhone?token=${token}&sid=${sid}`)
             .then(response => response.json())
             .then(data => {
                 if (data.data && data.data.phone) {
@@ -159,14 +159,14 @@ function bindChangePhoneEvent() {
     if (changePhoneBtn) {
         changePhoneBtn.addEventListener('click', () => {
             setMessage("换号中...", 'info');
-            fetch(`/api/cancelPhone?token=${token}&sid=${sid}`) // 修改：添加 sid 参数
+            fetch(`/api/cancelPhone?token=${token}&sid=${sid}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.data) {
                         cachedData = data.data;
                         loadData();
                         setTimeout(() => {
-                            fetch(`/api/getPhone?token=${token}&sid=${sid}`) // 修改：添加 sid 参数
+                            fetch(`/api/getPhone?token=${token}&sid=${sid}`)
                                 .then(response => response.json())
                                 .then(data => {
                                     if (data.data && data.data.phone) {
